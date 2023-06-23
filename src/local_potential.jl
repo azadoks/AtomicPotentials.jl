@@ -23,7 +23,10 @@ function fht(
 )
     r²f = Vloc.r .* (Vloc.r .* Vloc.f .- -Vloc.Z)  # == r² (Vloc - -Z/r)
     F = fht(Vloc.r, r²f, q, angular_momentum(Vloc), method) .+ 4π .* (-Vloc.Z ./ q .^ 2)
-    return construct_dual_quantity(Vloc; r=q, f=F)
+    interpolator = Interpolation.construct_interpolator(
+        q[(begin + 1):end], F[(begin + 1):end], interpolation_method
+    )
+    return _construct_dual_quantity(Vloc; r=q, f=F, interpolator=interpolator)
 end
 function ifht(
     Vloc::LocalPotential{FourierSpace},
@@ -32,7 +35,10 @@ function ifht(
 )
     q²F = q .^ 2 .* Vloc.f .- -Vloc.Z  # == q² (Vloc - -Z/q²)
     f = fht(Vloc.r, q²F, r, angular_momentum(Vloc), method) .+ 4π / (2π)^3 .* (-Vloc.Z ./ r)
-    return construct_dual_quantity(Vloc; r=r, f=f)
+    interpolator = Interpolation.construct_interpolator(
+        r[(begin + 1):end], f[(begin + 1):end], interpolation_method
+    )
+    return _construct_dual_quantity(Vloc; r=r, f=f, interpolator=interpolator)
 end
 
 ## Coulomb local potential
