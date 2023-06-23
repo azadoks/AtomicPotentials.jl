@@ -1,4 +1,6 @@
 module AtomicPotentials
+include("NumericalQuadrature/NumericalQuadrature.jl")
+
 ## Flag structs, abstract types, fundamental functions
 # Evaluation space flags
 export EvaluationSpace
@@ -52,8 +54,8 @@ export AugmentationFunction
 include("augmentation.jl")
 
 ## Non-local potentials
-export NonLocalPotential
-include("non_local_potential.jl")
+# export NonLocalPotential
+# include("non_local_potential.jl")
 
 ## Charge densities
 export AbstractChargeDensity
@@ -65,4 +67,8 @@ export GaussianChargeDensity
 export AbstractCoreChargeDensity
 export CoreChargeDensity
 include("charge_density.jl")
+
+## Atomic potential
+# export AtomicPotential
+# include("atomic_potential.jl")
 end # module AtomicPotentials

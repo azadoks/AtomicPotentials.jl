@@ -5,22 +5,26 @@ angular_momentum(quantity::AbstractProjector)::Int = quantity.l
 abstract type AbstractKleinmanBylanderProjector{S,A} <: AbstractProjector{S,A} end
 
 ## Numerical KB projector
-struct KleinmanBylanderProjector{S,Numerical} <: AbstractKleinmanBylanderProjector{S,Numerical}
+struct KleinmanBylanderProjector{S,Numerical} <:
+       AbstractKleinmanBylanderProjector{S,Numerical}
     r::AbstractVector
-    f::AbstractVector
-    interpolator
+    f::AbstractVector  # r²β(r) in real-space; β(q) in Fourier-space
+    interpolator  # r²β(r) in real-space; β(q) in Fourier-space
     n::Int
     l::Int
     j::Real
 end
 
 ## HGH KB projector
-struct HghKleinmanBylanderProjector{S,Analytical} <: AbstractKleinmanBylanderProjector{S,Numerical}
+struct HghKleinmanBylanderProjector{S,Analytical} <:
+       AbstractKleinmanBylanderProjector{S,Numerical}
     rnl::Real
     n::Int
     l::Int
 end
-function hgh_projector_polynomial(P::HghKleinmanBylanderProjector{FourierSpace}, x::T) where {T<:Real}
+function hgh_projector_polynomial(
+    P::HghKleinmanBylanderProjector{FourierSpace}, x::T
+) where {T<:Real}
     common::T = 4T(π)^(5 / T(4)) * sqrt(T(2^(P.l + 1)) * P.rnl^3)
 
     # Note: In the (l == 0 && i == 2) case the HGH paper has an error.
@@ -57,18 +61,28 @@ abstract type AbstractStateProjector{S,A} <: AbstractProjector{S,A} end
 ## Numerical state projector
 struct StateProjector{S,Numerical} <: AbstractStateProjector{S,Numerical}
     r::AbstractVector
-    f::AbstractVector
-    interpolator
+    f::AbstractVector  # r²χ(r) in real-space; χ(q) in Fourier-space
+    interpolator  # r²χ(r) in real-space; χ(q) in Fourier-space
     n::Int
     l::Int
     j::Real
 end
 
 ## Hydrogenic state projector
-hydrogenic_projector_radial_1(r, α) = 2 * α^(3/2) * exp(-α * r)
-hydrogenic_projector_radial_2(r, α) = 2^(-3/2) * α^(3/2) * (2 - α * r) * exp(-α * r/2)
-hydrogenic_projector_radial_3(r, α) = sqrt(4/27) * α^(3/2) * (1 - 2/3 * α * r + 2/27 * α^2 * r^2) * exp(-α * r/3)
-function hydrogenic_projector_radial_n(n, α)
+# TODO: should these functions return r² * f(r) like in other numeric quantities?
+function hydrogenic_projector_radial_1(r::T, α::Real)::T where {T}
+    return 2 * α^(3 / 2) * exp(-α * r)
+end
+function hydrogenic_projector_radial_2(r::T, α::Real)::T where {T}
+    return 2^(-3 / 2) * α^(3 / 2) * (2 - α * r) * exp(-α * r / 2)
+end
+function hydrogenic_projector_radial_3(r::T, α::Real)::T where {T}
+    return sqrt(4 / 27) *
+           α^(3 / 2) *
+           (1 - 2 / 3 * α * r + 2 / 27 * α^2 * r^2) *
+           exp(-α * r / 3)
+end
+function hydrogenic_projector_radial_n(n::Integer, α::Real)
     if n == 1
         return Base.Fix2(hydrogenic_projector_radial_1, α)
     elseif n == 2
@@ -81,15 +95,15 @@ function hydrogenic_projector_radial_n(n, α)
 end
 struct HydrogenicProjector{S,Numerical} <: AbstractStateProjector{S,Numerical}
     r::Union{Nothing,AbstractVector}
-    f::Union{Nothing,AbstractVector}
-    interpolator
+    f::Union{Nothing,AbstractVector}  # r²P(r) in real-space; P(q) in Fourier-space
+    interpolator  # TODO: ????
     n::Int
     l::Int
     α::Real
 
     function HydrogenicProjector(r::AbstractVector, n::Int, l::Int, α::Real=1.0)
         interpolator = hydrogenic_projector_radial_n(n, α)
-        f = interpolator.(r)
+        f = r .^ 2 .* interpolator.(r)  # We store r²f by convention
         return new{RealSpace,Numerical}(r, f, interpolator, n, l, α)
     end
 end

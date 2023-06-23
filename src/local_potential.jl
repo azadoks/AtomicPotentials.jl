@@ -4,26 +4,34 @@ angular_momentum(quantity::AbstractLocalPotential)::Int = 0
 ## Numerical local potential
 struct LocalPotential{S,Numerical} <: AbstractLocalPotential{S,Numerical}
     r::AbstractVector
-    f::AbstractVector
-    interpolator
+    f::AbstractVector  # Vloc(r) in real-space; Vloc(q) in Fourier-space
+    interpolator  # Vloc(r) in real-space; Vloc(q) in Fourier-Space
     Z
 end
 function (Vloc::LocalPotential{FourierSpace})(q::T)::T where {T}
-    !iszero(q) && return Vloc.itp(q)  # Compensating charge background
+    !iszero(q) && return Vloc.interpolator(q)  # Compensating charge background
     return zero(T)
 end
 function (Vloc::LocalPotential{RealSpace})(r::T)::T where {T}
-    !iszero(r) && return Vloc.itp(r)  # Divergence at r=0
+    !iszero(r) && return Vloc.interpolator(r)  # Divergence at r=0
     return T(-Inf)
 end
-function fht(Vloc::LocalPotential{RealSpace}, q::AbstractVector)
+function fht(
+    Vloc::LocalPotential{RealSpace},
+    q::AbstractVector,
+    method::NumericalQuadrature.QuadratureMethodOrType,
+)
     r²f = r .* (r .* Vloc.f .- -Vloc.Z)  # == r² (Vloc - -Z/r)
-    F = fht(Vloc.r, r²f, q, angular_momentum(Vloc)) .+ 4π .* (-Vloc.Z ./ q.^2)
+    F = fht(Vloc.r, r²f, q, angular_momentum(Vloc), method) .+ 4π .* (-Vloc.Z ./ q .^ 2)
     return construct_dual_quantity(Vloc; r=q, f=F)
 end
-function ifht(Vloc::LocalPotential{FourierSpace}, r::AbstractVector)
-    q²F = q.^2 .* Vloc.f .- -Vloc.Z  # == q² (Vloc - -Z/q²)
-    f = fht(Vloc.r, q²F, r, angular_momentum(Vloc)) .+ 4π/(2π)^3 .* (-Vloc.Z ./ r)
+function ifht(
+    Vloc::LocalPotential{FourierSpace},
+    r::AbstractVector,
+    method::NumericalQuadrature.QuadratureMethodOrType,
+)
+    q²F = q .^ 2 .* Vloc.f .- -Vloc.Z  # == q² (Vloc - -Z/q²)
+    f = fht(Vloc.r, q²F, r, angular_momentum(Vloc), method) .+ 4π / (2π)^3 .* (-Vloc.Z ./ r)
     return construct_dual_quantity(Vloc; r=r, f=f)
 end
 
@@ -46,23 +54,24 @@ struct GaussianLocalPotential{S,Analytical} <: AbstractLocalPotential{S,Analytic
     α
     L
 end
-function (Vloc::GaussianLocalPotential{RealSpace})(r)
-    return -Vloc.α / (√(2π) * Vloc.L) * exp(- (r / Vloc.L)^2 / 2)
+function (Vloc::GaussianLocalPotential{RealSpace})(r::T)::T where {T}
+    return -Vloc.α / (sqrt(2T(π)) * Vloc.L) * exp(-(r / Vloc.L)^2 / 2)
 end
-function (Vloc::GaussianLocalPotential{FourierSpace})(q::T) where {T}
+function (Vloc::GaussianLocalPotential{FourierSpace})(q::T)::T where {T}
     iszero(q) && return zero(T)  # Compensating charge background
     # = ∫_ℝ³ V(x) exp(-ix⋅q) dx
-    -Vloc.α * exp(- (q * Vloc.L)^2 / 2)
+    return -Vloc.α * exp(-(q * Vloc.L)^2 / 2)
 end
 
 ## Cohen-Bergstresser local potential
-struct CohenBergstresserLocalPotential{FourierSpace,Analytical} <: AbstractLocalPotential{FourierSpace,Analytical}
+struct CohenBergstresserLocalPotential{FourierSpace,Analytical} <:
+       AbstractLocalPotential{FourierSpace,Analytical}
     V_sym  # Map |G|^2 (in units of (2π / lattice_constant)^2) to form factors
     lattice_constant  # Lattice constant (in Bohr) which is assumed
 end
-function (Vloc::CohenBergstresserLocalPotential{FourierSpace})(q::T) where {T}
+function (Vloc::CohenBergstresserLocalPotential{FourierSpace})(q::T)::T where {T}
     iszero(q) && return zero(T)  # Compensating charge background
     # Get |q|^2 in units of (2π / lattice_constant)^2
-    qsq_pi = Int(round(q^2 / (2π / el.lattice_constant)^2, digits=2))
-    T(get(el.V_sym, qsq_pi, 0.0))
+    qsq_pi = Int(round(q^2 / (2π / el.lattice_constant)^2; digits=2))
+    return T(get(el.V_sym, qsq_pi, 0.0))
 end
