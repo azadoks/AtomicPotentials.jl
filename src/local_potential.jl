@@ -21,7 +21,7 @@ function fht(
     q::AbstractVector,
     method::NumericalQuadrature.QuadratureMethodOrType,
 )
-    r²f = r .* (r .* Vloc.f .- -Vloc.Z)  # == r² (Vloc - -Z/r)
+    r²f = Vloc.r .* (Vloc.r .* Vloc.f .- -Vloc.Z)  # == r² (Vloc - -Z/r)
     F = fht(Vloc.r, r²f, q, angular_momentum(Vloc), method) .+ 4π .* (-Vloc.Z ./ q .^ 2)
     return construct_dual_quantity(Vloc; r=q, f=F)
 end

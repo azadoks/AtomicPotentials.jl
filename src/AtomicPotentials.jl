@@ -1,5 +1,8 @@
 module AtomicPotentials
+
 include("NumericalQuadrature/NumericalQuadrature.jl")
+include("Interpolation/Interpolation.jl")
+include("fast_sphericalbesselj.jl")
 
 ## Flag structs, abstract types, fundamental functions
 # Evaluation space flags
@@ -27,7 +30,7 @@ include("fourier_hankel_transform.jl")
 
 ## Interpolation
 export interpolate_onto
-include("interpolation.jl")
+include("interpolate_onto.jl")
 
 ## Local potentials
 export AbstractLocalPotential

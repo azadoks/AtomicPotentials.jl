@@ -23,22 +23,24 @@ dual_space_of(::AbstractAtomicQuantity{S}) where {S<:EvaluationSpace} = dual_spa
 
 # TODO: replace with `similar` + `copyto!` dispatches if possible (requires identical
 # TODO: memory layout, I think, so maybe not?)
-@generated function bare_constructor_of(::Type{T}) where {T<:AbstractAtomicQuantity}
+@generated function _bare_constructor_of(::Type{T}) where {T<:AbstractAtomicQuantity}
     return getfield(parentmodule(T), nameof(T))
 end
-function bare_constructor_of(::T) where {T<:AbstractAtomicQuantity}
-    return bare_constructor_of(T)
+function _bare_constructor_of(::T) where {T<:AbstractAtomicQuantity}
+    return _bare_constructor_of(T)
 end
 
-function dual_constructor_of(::Type{T}) where {T}
+function _dual_constructor_of(::Type{T}) where {T}
     S, A = T.parameters
     return bare_constructor_of(T){dual_space_of(S),A}
 end
-function dual_constructor_of(quantity::AbstractAtomicQuantity{S,A}) where {S,A}
-    return bare_constructor_of(quantity){dual_space_of(S),A}
+function _dual_constructor_of(quantity::AbstractAtomicQuantity{S,A}) where {S,A}
+    return _bare_constructor_of(quantity){dual_space_of(S),A}
 end
 
-function construct_dual_quantity(quantity::AbstractAtomicQuantity; kwargs...)
+function _construct_similar_quantity(
+    quantity::AbstractAtomicQuantity, constructor::Type{<:AbstractAtomicQuantity}; kwargs...
+)
     # Take all of the property names and property values from the quantity instance and put
     # them into an ordered dictionary
     properties = OrderedDict(
@@ -50,8 +52,10 @@ function construct_dual_quantity(quantity::AbstractAtomicQuantity; kwargs...)
         @assert key in keys(properties)
         properties[key] = value
     end
-    # Get the constructor for the type of quantity provided and use it to construct a new
-    # instance with the dual evaluation space type parameter
-    return dual_constructor_of(quantity)(values(properties)...)
+    return constructor(values(properties)...)
+end
+
+function _construct_dual_quantity(quantity::AbstractAtomicQuantity; kwargs...)
+    return _construct_similar_quantity(quantity, _dual_constructor_of(quantity); kwargs...)
 end
 # TODO \
