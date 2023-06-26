@@ -74,7 +74,6 @@ struct StateProjector{S,Numerical} <: AbstractStateProjector{S,Numerical}
 end
 
 ## Hydrogenic state projector
-# TODO: should these functions return r² * f(r) like in other numeric quantities?
 function hydrogenic_projector_radial_1(r::T, α::Real)::T where {T}
     return 2 * α^(3 / 2) * exp(-α * r) * r^2
 end

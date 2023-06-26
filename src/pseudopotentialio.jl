@@ -30,7 +30,7 @@ function AtomicPotential(
     end
     β = OffsetVector(β, 0:lmax)
     D = OffsetVector(map(l -> diagm(psp8_file.ekb[l + 1]), 0:lmax), 0:lmax)
-    Vnl = NonLocalPotential{RealSpace,Numerical,eltype(eltype(β))}(β, D)
+    Vnl = NormConservingNonLocalPotential{RealSpace,Numerical,eltype(eltype(β))}(β, D)
 
     if isnothing(psp8_file.rhoc)
         ρcore = nothing
@@ -55,6 +55,110 @@ function AtomicPotential(
     states = OffsetVector([Nothing[] for _ in 0:lmax], 0:lmax)
 
     return AtomicPotential(identifier, symbol, Vloc, Vnl, ρval, ρcore, states)
+end
+
+function _upf_construct_augmentation_q_with_l(
+    upf_file::PseudoPotentialIO.UpfFile, interpolation_method
+)
+    Q = OffsetVector(
+        [
+            Matrix{AugmentationFunction{RealSpace,Numerical}}(
+                undef, upf_file.header.number_of_proj, upf_file.header.number_of_proj
+            ) for l in 0:(2upf_file.header.l_max)
+        ],
+        0:(2upf_file.header.l_max),
+    )
+    for l in 0:(2upf_file.header.l_max)
+        # Fill Q with zeroed quantities
+        for i in 1:(upf_file.header.number_of_proj), j in 1:(upf_file.header.number_of_proj)
+            r = upf_file.mesh.r
+            f = zero(r)
+            interpolator = Interpolation.construct_interpolator(r, f, interpolation_method)
+            Q[l][i, j] = AugmentationFunction{RealSpace,Numerical}(
+                r, f, interpolator, i, j, l
+            )
+        end
+        # Replace the zeroed quantities with data from the UPF where present
+        Q_upf_l = filter(
+            qijl -> qijl.angular_momentum == l, upf_file.nonlocal.augmentation.qijls
+        )
+        for Q_upf in Q_upf_l
+            n1 = Q_upf.first_index
+            n2 = Q_upf.second_index
+            f = Q_upf.qijl
+            r = upf_file.mesh.r[eachindex(f)]
+            interpolator = Interpolation.construct_interpolator(r, f, interpolation_method)
+            Q[l][n1, n2] = AugmentationFunction{RealSpace,Numerical}(
+                r, f, interpolator, n1, n2, l
+            )
+            Q[l][n2, n1] = AugmentationFunction{RealSpace,Numerical}(
+                r, f, interpolator, n2, n1, l
+            )
+        end
+    end
+    return Q
+end
+
+@views function _upf_construct_augmentation_qfcoef(
+    upf_file::PseudoPotentialIO.UpfFile, interpolation_method
+)
+    #TODO check correctness
+    r = upf_file.mesh.r
+    r2 = upf_file.mesh.r .^ 2
+    nqf = upf_file.nonlocal.augmentation.nqf
+    nqlc = 2upf_file.header.l_max + 1
+
+    Q = OffsetVector(
+        [
+            Matrix{AugmentationFunction{RealSpace,Numerical}}(
+                undef, upf_file.header.number_of_proj, upf_file.header.number_of_proj
+            ) for l in 0:(2upf_file.header.l_max)
+        ],
+        0:(2upf_file.header.l_max),
+    )
+    for l in 0:(2upf_file.header.l_max),
+        i in 1:(upf_file.header.number_of_proj),
+        j in 1:(upf_file.header.number_of_proj)
+        # Fill Q with zero vectors
+        f = zero(r)
+        interpolator = Interpolation.construct_interpolator(r, f, interpolation_method)
+        Q[l][i, j] = AugmentationFunction{RealSpace,Numerical}(r, f, interpolator, i, j, l)
+    end
+    for (Q_upf, Qfcoef_upf) in
+        zip(upf_file.nonlocal.augmentation.qijs, upf_file.nonlocal.augmentation.qfcoefs)
+        # Replace the zero vectors with datat from the UPF where present
+        # It's not worth the effort to make these into OffsetVectors zero-indexed for l.
+        qfcoef = reshape(Qfcoef_upf.qfcoef, nqf, nqlc)
+        rinner = upf_file.nonlocal.augmentation.rinner
+
+        i = Q_upf.first_index
+        j = Q_upf.second_index
+
+        li = upf_file.nonlocal.betas[i].angular_momentum
+        lj = upf_file.nonlocal.betas[j].angular_momentum
+
+        for l in abs(li - lj):2:(li + lj)
+            qij = copy(Q_upf.qij)
+            ircut = findfirst(i -> r[i] > rinner[l + 1], eachindex(r)) - 1
+            poly = Polynomial(qfcoef[:, l + 1])
+            qij[1:ircut] = r[1:ircut] .^ (l + 2) .* poly.(r2[1:ircut])
+
+            n1 = Q_upf.first_index
+            n2 = Q_upf.second_index
+            rij = r[eachindex(qij)]
+            interpolator = Interpolation.construct_interpolator(
+                rij, qij, interpolation_method
+            )
+
+            Q[l][n1, n2] = AugmentationFunction{RealSpace,Numerical}(
+                rij, qij, interpolator, n1, n2, l
+            )
+            Q[l][n2, n1] = AugmentationFunction{RealSpace,Numerical}(
+                rij, qij, interpolator, n2, n1, l
+            )
+        end
+    end
+    return Q
 end
 
 function AtomicPotential(
@@ -118,7 +222,35 @@ function AtomicPotential(
         )
     end
     D = OffsetVector(D, 0:lmax) ./ 2  # Ry -> Ha
-    Vnl = NonLocalPotential{RealSpace,Numerical,eltype(eltype(β))}(β, D)
+
+    if isnothing(upf_file.nonlocal.augmentation)
+        Vnl = NormConservingNonLocalPotential{RealSpace,Numerical,eltype(eltype(β))}(β, D)
+    else
+        q = OffsetVector(
+            map(
+                i -> collect(
+                    upf_file.nonlocal.augmentation.q[
+                        (cumul_nβ[i] + 1):cumul_nβ[i + 1],
+                        (cumul_nβ[i] + 1):cumul_nβ[i + 1],
+                    ],
+                ),
+                1:(length(cumul_nβ) - 1),
+            ),
+            0:(lmax),
+        )
+        if upf_file.nonlocal.augmentation.q_with_l
+            Q = _upf_construct_augmentation_q_with_l(upf_file, interpolation_method)
+        elseif upf_file.nonlocal.augmentation.nqf > 0
+            Q = _upf_construct_augmentation_qfcoef(upf_file, interpolation_method)
+        else
+            error("q_with_l == false and nqf == 0, unsure what to do...")
+        end
+        Vnl = UltrasoftNonLocalPotential{
+            RealSpace,Numerical,eltype(eltype(β)),eltype(eltype(Q))
+        }(
+            β, D, Q, q
+        )
+    end
 
     ## Core charge density
     if isnothing(upf_file.nlcc)
@@ -196,7 +328,7 @@ function AtomicPotential(hgh_file::PseudoPotentialIO.HghFile)
     end
     β = OffsetVector(β, 0:lmax)
     D = OffsetVector(hgh_file.h, 0:lmax)
-    Vnl = NonLocalPotential{RealSpace,Analytical,eltype(eltype(β))}(β, D)
+    Vnl = NormConservingNonLocalPotential{RealSpace,Analytical,eltype(eltype(β))}(β, D)
 
     ρval = nothing
     ρcore = nothing

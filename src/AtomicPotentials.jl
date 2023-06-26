@@ -74,7 +74,9 @@ export AugmentationFunction
 include("augmentation.jl")
 
 ## Non-local potentials
-export NonLocalPotential
+export AbstractNonLocalPotential
+export NormConservingNonLocalPotential
+export UltrasoftNonLocalPotential
 include("non_local_potential.jl")
 
 ## Charge densities

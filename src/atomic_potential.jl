@@ -1,7 +1,7 @@
 struct AtomicPotential{
     S<:EvaluationSpace,
     L<:AbstractLocalPotential{S},
-    NL<:Union{Nothing,NonLocalPotential{S}},
+    NL<:Union{Nothing,AbstractNonLocalPotential{S}},
     VD<:Union{Nothing,AbstractValenceChargeDensity{S}},
     CD<:Union{Nothing,AbstractCoreChargeDensity{S}},
     SP<:Union{Nothing,AbstractStateProjector{S}},
