@@ -37,7 +37,7 @@ function ifht(
     quadrature_method::NumericalQuadrature.QuadratureMethodOrType=NumericalQuadrature.Simpson,
     interpolation_method::Interpolation.InterpolationMethod=Interpolation.Spline(4),
 )::LocalPotential{RealSpace}
-    q²F = q .^ 2 .* Vloc.f .- -Vloc.Z  # == q² (Vloc - -Z/q²)
+    q²F = Vloc.r .^ 2 .* Vloc.f .- -Vloc.Z  # == q² (Vloc - -Z/q²)
     f =
         fht(Vloc.r, q²F, r, angular_momentum(Vloc), quadrature_method) .+
         4π / (2π)^3 .* (-Vloc.Z ./ r)

@@ -33,28 +33,10 @@ function _apply(potential::AtomicPotential, f::Function, args...; kwargs...)
     )
 end
 # TODO: metaprogramming?
-function fht(
-    potential::AtomicPotential{RealSpace,L,NL,VD,CD,SP}, args...; kwargs...
-)::AtomicPotential{
-    FourierSpace,
-    _dual_type_of(L),
-    _dual_type_of(NL),
-    _dual_type_of(VD),
-    _dual_type_of(CD),
-    _dual_type_of(SP),
-} where {L,NL,VD,CD,SP}
+function fht(potential::AtomicPotential{RealSpace}, args...; kwargs...)
     return _apply(potential, fht, args...; kwargs...)
 end
-function ifht(
-    potential::AtomicPotential{FourierSpace,L,NL,VD,CD,SP}, args...; kwargs...
-)::AtomicPotential{
-    RealSpace,
-    _dual_type_of(L),
-    _dual_type_of(NL),
-    _dual_type_of(VD),
-    _dual_type_of(CD),
-    _dual_type_of(SP),
-} where {L,NL,VD,CD,SP}
+function ifht(potential::AtomicPotential{FourierSpace}, args...; kwargs...)
     return _apply(potential, ifht, args...; kwargs...)
 end
 function interpolate_onto(potential::AP, args...; kwargs...)::AP where {AP<:AtomicPotential}
