@@ -1,7 +1,15 @@
 module AtomicPotentials
 
+using OffsetArrays
+
+## Submodules
+# Numerical integration / quadrature
+export NumericalQuadrature
 include("NumericalQuadrature/NumericalQuadrature.jl")
+# Interpolation interface
+export Interpolation
 include("Interpolation/Interpolation.jl")
+# Fast spherical Bessel functions of the first kind
 include("fast_sphericalbesselj.jl")
 
 ## Flag structs, abstract types, fundamental functions
@@ -18,11 +26,6 @@ export AbstractAtomicQuantity
 export interpolate_onto
 include("atomic_quantity.jl")
 
-## Atomic potential -- collection of atomic quantities
-export AtomicPotential
-export get_quantities
-include("atomic_potential.jl")
-
 ## Fourier-Hankel transforms
 export fht  # Fourier-Hankel transform
 export ifht  # Inverse Fourier-Hankel transform
@@ -32,9 +35,13 @@ include("fourier_hankel_transform.jl")
 export interpolate_onto
 include("interpolate_onto.jl")
 
+## Truncation
+include("truncate.jl")
+
 ## Local potentials
 export AbstractLocalPotential
 export LocalPotential
+export HghLocalPotential
 export CoulombLocalPotential
 export GaussianLocalPotential
 export CohenBergstresserLocalPotential
@@ -57,8 +64,8 @@ export AugmentationFunction
 include("augmentation.jl")
 
 ## Non-local potentials
-# export NonLocalPotential
-# include("non_local_potential.jl")
+export NonLocalPotential
+include("non_local_potential.jl")
 
 ## Charge densities
 export AbstractChargeDensity
@@ -71,7 +78,9 @@ export AbstractCoreChargeDensity
 export CoreChargeDensity
 include("charge_density.jl")
 
-## Atomic potential
-# export AtomicPotential
-# include("atomic_potential.jl")
+## Atomic potential -- collection of atomic quantities
+export AtomicPotential
+export get_quantities
+include("atomic_potential.jl")
+
 end # module AtomicPotentials

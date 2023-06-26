@@ -1,3 +1,8 @@
+# TODO: figure out how to work this in without causing too much trouble
+# TODO: design criteria
+# TODO:  (1) selectable at time of fht (i.e. can't be baked-into the LocalPotential or AtomicPotential)
+# TODO:  (2) respects fht interface
+# TODO: pretty sure can't have both, leaning towards breaking (1) to keep (2)
 abstract type AbstractLocalPotentialCorrection{S,Analytical} <:
               AbstractAtomicQuantity{S,Analytical} end
 

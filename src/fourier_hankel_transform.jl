@@ -1,17 +1,16 @@
 using LinearAlgebra
 
+fht(::Nothing, args...; kwargs...) = nothing
 # args... are included for interface consistency with numeric `fht`, which requires
 # a q-point mesh and an integration method
-function fht(
-    quantity::AbstractAtomicQuantity{RealSpace,Analytical}, args...
-)::AbstractAtomicQuantity{FourierSpace,Analytical}
+function fht(quantity::AbstractAtomicQuantity{RealSpace,Analytical}, args...)
     return _construct_dual_quantity(quantity)
 end
 function fht(
     quantity::AbstractAtomicQuantity{RealSpace,Numerical},
     q::AbstractVector,
-    quadrature_method::NumericalQuadrature.QuadratureMethodOrType,
-    interpolation_method::Interpolation.InterpolationMethod,
+    quadrature_method::NumericalQuadrature.QuadratureMethodOrType=NumericalQuadrature.Simpson,
+    interpolation_method::Interpolation.InterpolationMethod=Interpolation.Spline(4),
 )
     F = fht(quantity.r, quantity.f, q, angular_momentum(quantity), quadrature_method)
     interpolator = Interpolation.construct_interpolator(q, F, interpolation_method)
@@ -51,18 +50,17 @@ function fht(
     return fht(r, r²f_, q, l, quadrature_method)
 end
 
+ifht(::Nothing, args...; kwargs...) = nothing
 # args... are included for interface consistency with numeric `ifht`, which requires
 # an r-point mesh and an integration method
-function ifht(
-    ::AbstractAtomicQuantity{FourierSpace,Analytical}, args...
-)::AbstractAtomicQuantity{RealSpace,Analytical}
+function ifht(quantity::AbstractAtomicQuantity{FourierSpace,Analytical}, args...)
     return _construct_dual_quantity(quantity)
 end
 function ifht(
     quantity::AbstractAtomicQuantity{FourierSpace,Numerical},
     r::AbstractVector,
-    quadrature_method::NumericalQuadrature.QuadratureMethodOrType,
-    interpolation_method::Interpolation.InterpolationMethod,
+    quadrature_method::NumericalQuadrature.QuadratureMethodOrType=NumericalQuadrature.Simpson,
+    interpolation_method::Interpolation.InterpolationMethod=Interpolation.Spline(4),
 )
     f = ifht(quantity.r, quantity.f, r, angular_momentum(quantity), quadrature_method)
     r²f = r .^ 2 .* f

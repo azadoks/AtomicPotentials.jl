@@ -14,18 +14,23 @@ struct KleinmanBylanderProjector{S,Numerical} <:
     l::Int
     j::Real
 end
+function KleinmanBylanderProjector{S}(
+    r::AbstractVector, f::AbstractVector, interpolator, n::Integer, l::Integer, j::Real
+) where {S<:EvaluationSpace}
+    return KleinmanBylanderProjector{S,Numerical}(r, f, interpolator, n, l, j)
+end
 
 ## HGH KB projector
 struct HghKleinmanBylanderProjector{S,Analytical} <:
-       AbstractKleinmanBylanderProjector{S,Numerical}
-    rnl::Real
+       AbstractKleinmanBylanderProjector{S,Analytical}
+    r::Real
     n::Int
     l::Int
 end
 function hgh_projector_polynomial(
     P::HghKleinmanBylanderProjector{FourierSpace}, x::T
 ) where {T<:Real}
-    common::T = 4T(π)^(5 / T(4)) * sqrt(T(2^(P.l + 1)) * P.rnl^3)
+    common::T = 4T(π)^(5 / T(4)) * sqrt(T(2^(P.l + 1)) * P.r^3)
 
     # Note: In the (l == 0 && i == 2) case the HGH paper has an error.
     #       The first 8 in equation (8) should not be under the sqrt-sign
@@ -47,11 +52,11 @@ function hgh_projector_polynomial(
 end
 function (P::HghKleinmanBylanderProjector{RealSpace})(r::T)::T where {T<:Real}
     ired::T = (4 * P.n - 1) / T(2)
-    return sqrt(T(2)) * r^(P.l + 2(P.n - 1)) * exp(-r^2 / 2P.rnl^2) / P.rnl^(P.l + ired) /
+    return sqrt(T(2)) * r^(P.l + 2(P.n - 1)) * exp(-r^2 / 2P.r^2) / P.r^(P.l + ired) /
            sqrt(gamma(P.l + ired))
 end
 function (P::HghKleinmanBylanderProjector{FourierSpace})(q::T) where {T<:Real}
-    x::T = q * P.rnl
+    x::T = q * P.r
     return hgh_projector_polynomial(P, q) * exp(-x^2 / T(2))
 end
 
