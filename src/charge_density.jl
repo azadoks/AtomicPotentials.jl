@@ -7,23 +7,12 @@ struct ValenceChargeDensity{S,Numeric} <: AbstractValenceChargeDensity{S,Numeric
     r::AbstractVector
     f::AbstractVector  # r²ρval(r) in real-space; ρval(q) in Fourier-space
     interpolator  # r²ρval(r) in real-space; ρval(q) in Fourier-space
-    l::Int
 end
 
 struct GaussianChargeDensity{S,Analytical} <: AbstractValenceChargeDensity{S,Analytical}
     Z
     L
 end
-# function GaussianChargeDensity{S}(n_elec_core, n_elec_valence) where {S<:EvaluationSpace}
-#     Z = n_elec_valence
-#     L = _atom_decay_length(n_elec_core, n_elec_valence)
-#     return GaussianChargeDensity{S}(Z, L)
-# end
-# function GaussianChargeDensity{S}(symbol::Symbol, n_elec_valence) where {S<:EvaluationSpace}
-#     n_elec_valence = roun(Int, n_elec_valence)
-#     n_elec_core = PeriodicTable.elements[symbol].number - n_elec_valence
-#     return GaussianChargeDensity{S}(n_elec_core, n_elec_valence)
-# end
 function (ρ::GaussianChargeDensity{RealSpace})(r::T)::T where {T<:Real}
     return ρ.Z * exp(-(r / (2 * ρ.L))^2) / (sqrt(2) * ρ.L)
 end

@@ -49,7 +49,7 @@ function AtomicPotential(
         ρval_interpolator = Interpolation.construct_interpolator(
             r, ρval_f, interpolation_method
         )
-        ρval = ValenceChargeDensity{RealSpace,Numerical}(r, ρval_f, ρval_interpolator, 0)
+        ρval = ValenceChargeDensity{RealSpace,Numerical}(r, ρval_f, ρval_interpolator)
     end
 
     states = OffsetVector([Nothing[] for _ in 0:lmax], 0:lmax)
@@ -141,9 +141,7 @@ function AtomicPotential(
         ρval_interpolator = Interpolation.construct_interpolator(
             ρval_r, ρval_f, interpolation_method
         )
-        ρval = ValenceChargeDensity{RealSpace,Numerical}(
-            ρval_r, ρval_f, ρval_interpolator, 0
-        )
+        ρval = ValenceChargeDensity{RealSpace,Numerical}(ρval_r, ρval_f, ρval_interpolator)
     end
 
     ## Pseudo-atomic states

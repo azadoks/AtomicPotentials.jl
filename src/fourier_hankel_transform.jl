@@ -43,8 +43,6 @@ function fht(
     l::Int,
     quadrature_method::NumericalQuadrature.QuadratureMethodOrType,
 )
-    # r²f_ = zero(r)
-    # r²f_ .= r²f.(r)
     return fht(r, r²f.(r), q, l, quadrature_method)
 end
 
@@ -76,7 +74,6 @@ function ifht(
     # The inverse Fourier-Hankel transform is the same as the direct transform
     # except for a normalization factor (1/(2π)³ and the sign of the phase factor
     # (i)ˡ vs. (-i)ˡ
-    # q²F = q .^ 2 .* F
     f = fht(q, q .^ 2 .* F, r, l, quadrature_method) ./ (2π)^3
     return f
 end
@@ -87,7 +84,5 @@ function ifht(
     l::Int,
     quadrature_method::NumericalQuadrature.QuadratureMethodOrType,
 )
-    # F_ = zero(q)
-    # F_ .= F.(q)
     return ifht(q, F.(q), r, l, quadrature_method)
 end
