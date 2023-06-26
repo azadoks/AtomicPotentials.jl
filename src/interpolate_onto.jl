@@ -1,13 +1,12 @@
+interpolate_onto(::Nothing, args...; kwargs...) = nothing
 function interpolate_onto(
     quantity::AbstractAtomicQuantity{S,Numerical}, r::AbstractVector
-)::typeof(quantity) where {S}
+) where {S}
     f = quantity.interpolator.(r)
     constructor = typeof(quantity)
     return _construct_similar_quantity(quantity, constructor; r=r, f=f)
 end
-function interpolate_onto(
-    quantity::AbstractAtomicQuantity{S,Numerical}, Δr::Real
-)::typeof(quantity) where {S}
+function interpolate_onto(quantity::AbstractAtomicQuantity{S,Numerical}, Δr::Real) where {S}
     r_min, r_max = extrema(quantity.r)
     # Ensure that the endpoints of the radial mesh stay in the new radial mesh
     # by massaging Δr to be _at most_ the value provided, i.e. reduce the spacing

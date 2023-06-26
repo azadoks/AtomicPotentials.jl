@@ -37,20 +37,22 @@ function AtomicPotential(
     else
         ρcore_f = r .^ 2 .* psp8_file.rhoc ./ 4π
         ρcore_interpolator = Interpolation.construct_interpolator(
-            r, f, interpolation_method
+            r, ρcore_f, interpolation_method
         )
-        ρcore = ValenceChargeDensity{RealSpace,Numerical}(r, ρcore_f, ρcore_interpolator, 0)
+        ρcore = CoreChargeDensity{RealSpace,Numerical}(r, ρcore_f, ρcore_interpolator)
     end
 
     if isnothing(psp8_file.rhov)
         ρval = nothing
     else
         ρval_f = r .^ 2 .* psp8_file.rhov ./ 4π
-        ρval_interpolator = Interpolation.construct_interpolator(r, f, interpolation_method)
+        ρval_interpolator = Interpolation.construct_interpolator(
+            r, ρval_f, interpolation_method
+        )
         ρval = ValenceChargeDensity{RealSpace,Numerical}(r, ρval_f, ρval_interpolator, 0)
     end
 
-    states = OffsetVector([StateProjector{RealSpace,Numerical}[] for l in 0:lmax], 0:lmax)
+    states = OffsetVector([Nothing[] for _ in 0:lmax], 0:lmax)
 
     return AtomicPotential(identifier, symbol, Vloc, Vnl, ρval, ρcore, states)
 end
@@ -169,9 +171,7 @@ function AtomicPotential(
         end
         states = OffsetVector(χ, 0:lmax)
     else
-        states = OffsetVector(
-            [StateProjector{RealSpace,Numerical}[] for l in 0:lmax], 0:lmax
-        )
+        states = OffsetVector([Nothing[] for _ in 0:lmax], 0:lmax)
     end
 
     return AtomicPotential(identifier, symbol, Vloc, Vnl, ρval, ρcore, states)
