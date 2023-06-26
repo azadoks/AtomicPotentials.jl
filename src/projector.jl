@@ -98,17 +98,24 @@ function hydrogenic_projector_radial_n(n::Integer, α::Real)
         throw(ArgumentError("n=$(n) is not supported"))
     end
 end
-struct HydrogenicProjector{S,Numerical} <: AbstractStateProjector{S,Numerical}
+struct HydrogenicProjector{S,A} <: AbstractStateProjector{S,A}
     r::Union{Nothing,AbstractVector}
     f::Union{Nothing,AbstractVector}  # r²P(r) in real-space; P(q) in Fourier-space
-    interpolator  # TODO: ????
+    interpolator
     n::Int
     l::Int
     α::Real
-
-    function HydrogenicProjector(r::AbstractVector, n::Int, l::Int, α::Real=1.0)
+    function HydrogenicProjector{RealSpace}(r::AbstractVector, n::Int, l::Int, α::Real=1.0)
         interpolator = hydrogenic_projector_radial_n(n, α)
         f = r .^ 2 .* interpolator.(r)  # We store r²f by convention
         return new{RealSpace,Numerical}(r, f, interpolator, n, l, α)
     end
+    function HydrogenicProjector{FourierSpace,Numerical}(
+        q::AbstractVector, F::AbstractVector, interpolator, n::Int, l::Int, α::Real=1.0
+    )
+        return new{FourierSpace,Numerical}(q, F, interpolator, n, l, α)
+    end
+end
+function ifht(proj::HydrogenicProjector, r::AbstractVector, args...; kwargs...)
+    return HydrogenicProjector{RealSpace}(r, proj.n, proj.l, proj.α)
 end
