@@ -10,7 +10,7 @@ struct ValenceChargeDensity{S,Numeric} <: AbstractValenceChargeDensity{S,Numeric
     l::Int
 end
 
-struct GaussianChargeDensity{S,Analytical} <: AbstractChargeDensity{S,Analytical}
+struct GaussianChargeDensity{S,Analytical} <: AbstractValenceChargeDensity{S,Analytical}
     Z
     L
 end
