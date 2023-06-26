@@ -76,16 +76,17 @@ end
 ## Hydrogenic state projector
 # TODO: should these functions return r² * f(r) like in other numeric quantities?
 function hydrogenic_projector_radial_1(r::T, α::Real)::T where {T}
-    return 2 * α^(3 / 2) * exp(-α * r)
+    return 2 * α^(3 / 2) * exp(-α * r) * r^2
 end
 function hydrogenic_projector_radial_2(r::T, α::Real)::T where {T}
-    return 2^(-3 / 2) * α^(3 / 2) * (2 - α * r) * exp(-α * r / 2)
+    return 2^(-3 / 2) * α^(3 / 2) * (2 - α * r) * exp(-α * r / 2) * r^2
 end
 function hydrogenic_projector_radial_3(r::T, α::Real)::T where {T}
     return sqrt(4 / 27) *
            α^(3 / 2) *
            (1 - 2 / 3 * α * r + 2 / 27 * α^2 * r^2) *
-           exp(-α * r / 3)
+           exp(-α * r / 3) *
+           r^2
 end
 function hydrogenic_projector_radial_n(n::Integer, α::Real)
     if n == 1
@@ -107,7 +108,7 @@ struct HydrogenicProjector{S,A} <: AbstractStateProjector{S,A}
     α::Real
     function HydrogenicProjector{RealSpace}(r::AbstractVector, n::Int, l::Int, α::Real=1.0)
         interpolator = hydrogenic_projector_radial_n(n, α)
-        f = r .^ 2 .* interpolator.(r)  # We store r²f by convention
+        f = interpolator.(r)
         return new{RealSpace,Numerical}(r, f, interpolator, n, l, α)
     end
     function HydrogenicProjector{FourierSpace,Numerical}(
