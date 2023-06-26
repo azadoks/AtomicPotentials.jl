@@ -52,7 +52,7 @@ function AtomicPotential(
         ρval = ValenceChargeDensity{RealSpace,Numerical}(r, ρval_f, ρval_interpolator)
     end
 
-    states = OffsetVector([Nothing[] for _ in 0:lmax], 0:lmax)
+    states = OffsetVector(Vector{Nothing}[], 0:-1)
 
     return AtomicPotential(identifier, symbol, Vloc, Vnl, ρval, ρcore, states)
 end
@@ -301,7 +301,7 @@ function AtomicPotential(
         end
         states = OffsetVector(χ, 0:lmax)
     else
-        states = OffsetVector([Nothing[] for _ in 0:lmax], 0:lmax)
+        states = OffsetVector(Vector{Nothing}[], 0:-1)
     end
 
     return AtomicPotential(identifier, symbol, Vloc, Vnl, ρval, ρcore, states)
@@ -332,7 +332,7 @@ function AtomicPotential(hgh_file::PseudoPotentialIO.HghFile)
 
     ρval = nothing
     ρcore = nothing
-    states = OffsetVector([Nothing[] for _ in 0:lmax], 0:lmax)
+    states = OffsetVector(Vector{Nothing}[], 0:-1)
 
     return AtomicPotential(hgh_file.identifier, symbol, Vloc, Vnl, ρval, ρcore, states)
 end

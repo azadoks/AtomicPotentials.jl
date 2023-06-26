@@ -34,6 +34,15 @@ function AtomicPotential(
     )
 end
 Base.Broadcast.broadcastable(potential::AtomicPotential) = Ref(potential)
+function Base.show(io::IO, ::MIME"text/plain", pot::AtomicPotential)
+    @printf io "%032s: %s\n" "identifier" pot.identifier
+    @printf io "%032s: %s\n" "element" pot.symbol
+    @printf io "%032s: %s\n" "local potential" pot.local_potential
+    @printf io "%032s: %s\n" "non-local potential" pot.nonlocal_potential
+    @printf io "%032s: %s\n" "valence density" pot.valence_density
+    @printf io "%032s: %s\n" "core density" pot.core_density
+    @printf io "%032s: %s\n" "states" pot.states
+end
 
 function _apply(potential::AtomicPotential, f::Function, args...; kwargs...)
     states = map(potential.states) do states_l

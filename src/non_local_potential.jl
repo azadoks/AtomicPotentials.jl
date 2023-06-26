@@ -21,6 +21,10 @@ struct NormConservingNonLocalPotential{
     β::OffsetVector{Vector{P},Vector{Vector{P}}}
     D::OffsetVector{Matrix,Vector{Matrix}}
 end
+function Base.show(io::IO, Vnl::NormConservingNonLocalPotential)
+    n_projectors = sum(length, Vnl.β)
+    return print(io, "$(typeof(Vnl))($(n_projectors)x$(eltype(eltype(Vnl.β))))")
+end
 function _apply(Vnl::NormConservingNonLocalPotential, f::Function, args...; kwargs...)
     β = map(Vnl.β) do βl
         map(βl) do βln
@@ -40,6 +44,15 @@ struct UltrasoftNonLocalPotential{
     D::OffsetVector{Matrix,Vector{Matrix}}
     Q::OffsetVector{Matrix{QT},Vector{Matrix{QT}}}
     q::OffsetVector{Matrix,Vector{Matrix}}
+end
+function Base.show(io::IO, Vnl::UltrasoftNonLocalPotential)
+    n_projectors = sum(length, Vnl.β)
+    n_augmentation = sum(length, Vnl.Q)
+    return print(
+        io,
+        "$(typeof(Vnl))($(n_projectors)x$(eltype(eltype(Vnl.β))),",
+        " $(n_augmentation)x$(eltype(eltype(Vnl.Q))))",
+    )
 end
 function _apply(Vnl::UltrasoftNonLocalPotential, f::Function, args...; kwargs...)
     β = map(Vnl.β) do βl

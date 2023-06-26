@@ -5,6 +5,7 @@ using OffsetArrays
 using OrderedCollections
 using Polynomials
 using PrecompileTools
+using Printf
 
 using PeriodicTable: PeriodicTable
 import PseudoPotentialIOExperimental as PseudoPotentialIO
