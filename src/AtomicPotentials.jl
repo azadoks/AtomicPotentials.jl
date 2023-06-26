@@ -1,6 +1,14 @@
 module AtomicPotentials
 
+using LinearAlgebra
 using OffsetArrays
+using OrderedCollections
+using Polynomials
+
+using PeriodicTable: PeriodicTable
+import PseudoPotentialIOExperimental as PseudoPotentialIO
+import Bessels: gamma
+import SpecialFunctions: erf
 
 ## Submodules
 # Numerical integration / quadrature
@@ -9,6 +17,7 @@ include("NumericalQuadrature/NumericalQuadrature.jl")
 # Interpolation interface
 export Interpolation
 include("Interpolation/Interpolation.jl")
+
 # Fast spherical Bessel functions of the first kind
 include("fast_sphericalbesselj.jl")
 
@@ -82,5 +91,6 @@ include("charge_density.jl")
 export AtomicPotential
 export get_quantities
 include("atomic_potential.jl")
+include("pseudopotentialio.jl")
 
 end # module AtomicPotentials

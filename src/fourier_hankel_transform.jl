@@ -1,5 +1,3 @@
-using LinearAlgebra
-
 fht(::Nothing, args...; kwargs...) = nothing
 # args... are included for interface consistency with numeric `fht`, which requires
 # a q-point mesh and an integration method

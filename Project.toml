@@ -5,6 +5,20 @@ version = "0.1.0"
 
 [deps]
 BSplineKit = "093aae92-e908-43d7-9660-e50ee39d5a0a"
+Bessels = "0e736298-9ec6-45e8-9647-e4fc86a2fe38"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 OffsetArrays = "6fe1bfb0-de20-5000-8ca7-80f57d26f881"
 OrderedCollections = "bac558e1-5e72-5ebc-8fee-abe8a469f55d"
+PeriodicTable = "7b2266bf-644c-5ea3-82d8-af4bbd25a884"
+Polynomials = "f27b6e38-b328-58d1-80ce-0feddd5e7a45"
+PseudoPotentialIOExperimental = "3c1e8497-ccc6-4bf7-b29e-53e04e06307e"
+SpecialFunctions = "276daf66-3868-5448-9aa4-cd146d93841b"
+
+[compat]
+BSplineKit = "0.16"
+Bessels = "0.2"
+OffsetArrays = "1.12"
+OrderedCollections = "1.6"
+PeriodicTable = "1.1"
+Polynomials = "3.2"
+SpecialFunctions = "2.3"

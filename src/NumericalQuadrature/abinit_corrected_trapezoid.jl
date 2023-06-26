@@ -43,12 +43,10 @@ meshes!
 \end{cases}
 ```
 """
-struct AbinitCorrectedTrapezoid <: QuadratureMethod end
+struct AbinitCorrectedTrapezoid{Uniform} <: QuadratureMethod end
+AbinitCorrectedTrapezoid() = AbinitCorrectedTrapezoid{Uniform}()
 
-function integration_weights!(
-    weights::AbstractVector, mesh::UniformMesh, ::AbinitCorrectedTrapezoid
-)
-    Δx = mesh.a
+function integration_weights!(weights::AbstractVector, Δx::Real, ::AbinitCorrectedTrapezoid)
     #! format: off
     if length(weights) >= 10
         weights[begin] = 23.75 / 72 * Δx

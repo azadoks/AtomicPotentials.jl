@@ -1,5 +1,3 @@
-using OrderedCollections
-
 abstract type EvaluationSpace end
 abstract type RealSpace <: EvaluationSpace end  # Is in real / direct space
 abstract type FourierSpace <: EvaluationSpace end  # Is in Fourier / reciprocal space

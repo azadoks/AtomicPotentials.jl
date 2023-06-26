@@ -14,6 +14,25 @@ struct AtomicPotential{
     core_density::CD
     states::OffsetVector{Vector{SP},Vector{Vector{SP}}}
 end
+function AtomicPotential(
+    local_potential;
+    identifier="",
+    symbol=:X,
+    nonlocal_potential=nothing,
+    valence_density=nothing,
+    core_density=nothing,
+    states=OffsetVector(Vector{Nothing}[], 0:-1),
+)
+    return AtomicPotential(
+        identifier,
+        symbol,
+        local_potential,
+        nonlocal_potential,
+        valence_density,
+        core_density,
+        states,
+    )
+end
 Base.Broadcast.broadcastable(potential::AtomicPotential) = Ref(potential)
 
 function _apply(potential::AtomicPotential, f::Function, args...; kwargs...)
