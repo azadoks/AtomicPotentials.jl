@@ -22,7 +22,7 @@ end
 
 ## Quantity evaluators
 function (quantity::AbstractAtomicQuantity{S,Numerical})(x::T)::T where {S,T}
-    return quantity.interpolator(x)
+    return Interpolation.evaluate(quantity.interpolator, x)
 end
 
 ## Methods for generically constructing new quantities with different type parameters
