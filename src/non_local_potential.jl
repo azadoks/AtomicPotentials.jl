@@ -21,30 +21,6 @@ function _apply(Vnl::NonLocalPotential, f::Function, args...; kwargs...)
     return NonLocalPotential(β, Vnl.D)
 end
 
-for (op, Sin, Sout) in ((:ht, :RealSpace, :FourierSpace), (:iht, :FourierSpace, :RealSpace))
-        #! format: off
-        eval(
-            quote
-                function $(op)(
-                    Vnl::NonLocalPotential{$(Sin),A,Pin},
-                    args...;
-                    kwargs...
-                )::NonLocalPotential{$(Sout),A,<:AbstractKleinmanBylanderProjector{$(Sout),A}} where {
-                    A,
-                    Pin<:AbstractKleinmanBylanderProjector{$(Sin),A}
-                }
-                    β = map(Vnl.β) do βl
-                        map(βl) do βln
-                            return $(op)(βln, args...; kwargs...)
-                        end
-                    end
-                    return NonLocalPotential(β, Vnl.D)
-                end
-            end
-        )
-        #! format: on
-end
-
 count_n_proj_radial(Vnl::NonLocalPotential, l::Integer) = length(Vnl.β[l])
 count_n_proj_radial(Vnl::NonLocalPotential) = length.(Vnl.β)
 count_n_proj(Vnl::NonLocalPotential, l::Integer) = length(Vnl.β[l]) * (2l + 1)

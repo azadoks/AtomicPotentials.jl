@@ -128,3 +128,17 @@ function iht(
     )
     return _construct_dual_quantity(Vloc; r=r, f=f, interpolator=interpolator)
 end
+
+for (op, S) in ((:ht, :RealSpace), (:iht, :FourierSpace))
+    eval(
+        quote
+            function $(op)(
+                x::Union{NonLocalPotential{$(S)},Augmentation{$(S)},AtomicPotential{$(S)}},
+                args...;
+                kwargs...,
+            )
+                return _apply(x, $(op), args...; kwargs...)
+            end
+        end,
+    )
+end

@@ -97,6 +97,8 @@ include("interpolate_onto.jl")
 ## Truncation
 include("truncate.jl")
 
+include("opt.jl")
+
 # @setup_workload begin
 #     psp_files = []
 #     for psp_file_tuple in [
