@@ -84,7 +84,7 @@ for (op, Sin, Sout) in ((:ht, :RealSpace, :FourierSpace), (:iht, :FourierSpace, 
                     eval(
                         quote
                             function $(op)(
-                                ap::AtomicPotential{
+                                potential::AtomicPotential{
                                     $(Sin),
                                     LocalPotential{$(Sin),Numerical},
                                     NonLocalPotential{
