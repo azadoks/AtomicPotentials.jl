@@ -64,10 +64,6 @@ include("augmentation.jl")
 
 ## Non-local potentials
 export NonLocalPotential
-export count_n_proj_radial
-export count_n_proj
-export lmax
-export angular_momenta
 include("non_local_potential.jl")
 
 ## Charge densities
@@ -82,6 +78,8 @@ export charge_ionic
 export charge_nuclear
 export n_elec_valence
 export n_elec_core
+export count_n_proj_radial
+export count_n_proj
 export lmax
 export angular_momenta
 include("atomic_potential.jl")
