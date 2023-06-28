@@ -44,7 +44,7 @@ function ht(
     q::AbstractVector,
     quadrature_method::NumericalQuadrature.QuadratureMethodOrType=NumericalQuadrature.Simpson,
     interpolation_method::Interpolation.InterpolationMethod=Interpolation.Spline(4),
-)
+)::AbstractAtomicQuantity{FourierSpace,Numerical}
     F = ht(quantity.r, quantity.f, q, angular_momentum(quantity), quadrature_method)
     interpolator = Interpolation.construct_interpolator(q, F, interpolation_method)
     return _construct_dual_quantity(quantity; r=q, f=F, interpolator=interpolator)
@@ -66,28 +66,12 @@ function ht(
     return _construct_dual_quantity(Vloc; r=q, f=F, interpolator=interpolator)
 end
 
-function ht(
-    x::Union{
-        NonLocalPotential{RealSpace},Augmentation{RealSpace},AtomicPotential{RealSpace}
-    },
-    args...;
-    kwargs...,
-)
-    return _apply(x, ht, args...; kwargs...)
-end
-
-function ht(
-    ::AugmentationFunction{RealSpace,Numerical}, q::AbstractVector, args...; kwargs...
-)
-    return error("`ht` not implemented for `AugmentationFunction`")
-end
-
 function iht(
     quantity::AbstractAtomicQuantity{FourierSpace,Numerical},
     r::AbstractVector,
     quadrature_method::NumericalQuadrature.QuadratureMethodOrType=NumericalQuadrature.Simpson,
     interpolation_method::Interpolation.InterpolationMethod=Interpolation.Spline(4),
-)
+)::AbstractAtomicQuantity{RealSpace,Numerical}
     f = iht(quantity.r, quantity.f, r, angular_momentum(quantity), quadrature_method)
     r²f = r .^ 2 .* f
     interpolator = Interpolation.construct_interpolator(r, r²f, interpolation_method)
@@ -113,7 +97,9 @@ iht(::Nothing, args...; kwargs...) = nothing
 
 # args... are included for interface consistency with numeric `iht`, which requires
 # an r-point mesh and an integration method
-function iht(quantity::AbstractAtomicQuantity{FourierSpace,Analytical}, args...)
+function iht(
+    quantity::AbstractAtomicQuantity{FourierSpace,Analytical}, args...
+)::AbstractAtomicQuantity{RealSpace,Analytical}
     return _construct_dual_quantity(quantity)
 end
 
@@ -141,54 +127,4 @@ function iht(
         r[(begin + 1):end], f[(begin + 1):end], interpolation_method
     )
     return _construct_dual_quantity(Vloc; r=r, f=f, interpolator=interpolator)
-end
-
-function iht(
-    x::Union{
-        NonLocalPotential{FourierSpace},
-        Augmentation{FourierSpace},
-        AtomicPotential{FourierSpace},
-    },
-    args...;
-    kwargs...,
-)
-    return _apply(x, iht, args...; kwargs...)
-end
-
-function iht(
-    ::AugmentationFunction{FourierSpace,Numerical}, r::AbstractVector, args...; kwargs...
-)
-    return error("`iht` not implemented for `AugmentationFunction`")
-end
-
-for quantity_type in
-    (:KleinmanBylanderProjector, :StateProjector, :ChargeDensity, :AugmentationFunction)
-    #! format: off
-    eval(
-        quote
-            function ht(
-                quantity::$(quantity_type){RealSpace,Numerical},
-                q::AbstractVector,
-                quadrature_method::NumericalQuadrature.QuadratureMethodOrType=NumericalQuadrature.Simpson,
-                interpolation_method::Interpolation.InterpolationMethod=Interpolation.Spline(4),
-            )::$(quantity_type){FourierSpace,Numerical}
-                F = ht(quantity.r, quantity.f, q, angular_momentum(quantity), quadrature_method)
-                interpolator = Interpolation.construct_interpolator(q, F, interpolation_method)
-                return _construct_dual_quantity(quantity; r=q, f=F, interpolator=interpolator)
-            end
-
-            function iht(
-                quantity::$(quantity_type){FourierSpace,Numerical},
-                r::AbstractVector,
-                quadrature_method::NumericalQuadrature.QuadratureMethodOrType=NumericalQuadrature.Simpson,
-                interpolation_method::Interpolation.InterpolationMethod=Interpolation.Spline(4),
-            )::$(quantity_type){RealSpace,Numerical}
-                f = iht(quantity.r, quantity.f, r, angular_momentum(quantity), quadrature_method)
-                r²f = r .^ 2 .* f
-                interpolator = Interpolation.construct_interpolator(r, r²f, interpolation_method)
-                return _construct_dual_quantity(quantity; r=r, f=r²f, interpolator=interpolator)
-            end
-        end
-    )
-    #! format: on
 end

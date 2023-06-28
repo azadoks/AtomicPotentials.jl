@@ -39,7 +39,33 @@ function AtomicPotential(
     )
 end
 
-Base.Broadcast.broadcastable(potential::AtomicPotential) = Ref(potential)
+for (op, Tin, Tout) in ((:ht, :RealSpace, :FourierSpace), (:iht, :RealSpace, :FourierSpace))
+    eval(
+        quote
+            function $(op)(
+                pot::AtomicPotential{$(Tin)}, args...; kwargs...
+            )::AtomicPotential{$(Tout)}
+                states = map(pot.states) do states_l
+                    map(states_l) do state_ln
+                        return $(op)(state_ln, args...; kwargs...)
+                    end
+                end
+                return AtomicPotential(
+                    pot.identifier,
+                    pot.symbol,
+                    $(op)(pot.local_potential, args...; kwargs...),
+                    $(op)(pot.nonlocal_potential, args...; kwargs...),
+                    $(op)(pot.valence_density, args...; kwargs...),
+                    $(op)(pot.core_density, args...; kwargs...),
+                    states,
+                    $(op)(pot.augmentation, args...; kwargs...),
+                )
+            end
+        end,
+    )
+end
+
+Base.Broadcast.broadcastable(pot::AtomicPotential) = Ref(pot)
 
 function Base.show(io::IO, ::MIME"text/plain", pot::AtomicPotential)
     @printf io "%032s: %s\n" "identifier" pot.identifier
