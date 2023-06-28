@@ -1,10 +1,10 @@
 function ht(
     r::AbstractVector,
     r²f::AbstractVector,
-    q::AbstractVector,
+    q::AbstractVector{T},
     l::Int,
     quadrature_method::NumericalQuadrature.QuadratureMethodOrType,
-)
+)::Vector{T} where {T<:Real}
     # The phase factor (-i)^l is not included
     @assert length(r) == length(r²f) "`r` and `r²f` must be the same length"
 
@@ -159,4 +159,36 @@ function iht(
     ::AugmentationFunction{FourierSpace,Numerical}, r::AbstractVector, args...; kwargs...
 )
     return error("`iht` not implemented for `AugmentationFunction`")
+end
+
+for quantity_type in
+    (:KleinmanBylanderProjector, :StateProjector, :ChargeDensity, :AugmentationFunction)
+    #! format: off
+    eval(
+        quote
+            function ht(
+                quantity::$(quantity_type){RealSpace,Numerical},
+                q::AbstractVector,
+                quadrature_method::NumericalQuadrature.QuadratureMethodOrType=NumericalQuadrature.Simpson,
+                interpolation_method::Interpolation.InterpolationMethod=Interpolation.Spline(4),
+            )::$(quantity_type){FourierSpace,Numerical}
+                F = ht(quantity.r, quantity.f, q, angular_momentum(quantity), quadrature_method)
+                interpolator = Interpolation.construct_interpolator(q, F, interpolation_method)
+                return _construct_dual_quantity(quantity; r=q, f=F, interpolator=interpolator)
+            end
+
+            function iht(
+                quantity::$(quantity_type){FourierSpace,Numerical},
+                r::AbstractVector,
+                quadrature_method::NumericalQuadrature.QuadratureMethodOrType=NumericalQuadrature.Simpson,
+                interpolation_method::Interpolation.InterpolationMethod=Interpolation.Spline(4),
+            )::$(quantity_type){RealSpace,Numerical}
+                f = iht(quantity.r, quantity.f, r, angular_momentum(quantity), quadrature_method)
+                r²f = r .^ 2 .* f
+                interpolator = Interpolation.construct_interpolator(r, r²f, interpolation_method)
+                return _construct_dual_quantity(quantity; r=r, f=r²f, interpolator=interpolator)
+            end
+        end
+    )
+    #! format: on
 end
