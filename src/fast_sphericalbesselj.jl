@@ -16,13 +16,23 @@ j_4(x) &= \frac{(105 - 45x^2 + x^4)\sin(x) + (10x^3 - 105x)\cos(x)}{x^5} \\
 \end{aligned}
 ```
 """
-function fast_sphericalbesselj(l::Integer)::Function
-    l == 0 && return fast_sphericalbesselj0
-    l == 1 && return fast_sphericalbesselj1
-    l == 2 && return fast_sphericalbesselj2
-    l == 3 && return fast_sphericalbesselj3
-    l == 4 && return fast_sphericalbesselj4
-    l == 5 && return fast_sphericalbesselj5
+# function fast_sphericalbesselj(l::Integer)::Function
+#     l == 0 && return fast_sphericalbesselj0
+#     l == 1 && return fast_sphericalbesselj1
+#     l == 2 && return fast_sphericalbesselj2
+#     l == 3 && return fast_sphericalbesselj3
+#     l == 4 && return fast_sphericalbesselj4
+#     l == 5 && return fast_sphericalbesselj5
+#     return x -> sphericalbesselj(l, x)
+# end
+
+function fast_sphericalbesselj(l::Integer, x::T)::T where {T<:Real}
+    l == 0 && return fast_sphericalbesselj0(x)
+    l == 1 && return fast_sphericalbesselj1(x)
+    l == 2 && return fast_sphericalbesselj2(x)
+    l == 3 && return fast_sphericalbesselj3(x)
+    l == 4 && return fast_sphericalbesselj4(x)
+    l == 5 && return fast_sphericalbesselj5(x)
     return x -> sphericalbesselj(l, x)
 end
 

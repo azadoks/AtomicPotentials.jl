@@ -146,7 +146,19 @@ for (op, Sin, Sout) in ((:ht, :RealSpace, :FourierSpace), (:iht, :FourierSpace, 
                                         return $(op)(state_ln, args...; kwargs...)
                                     end
                                 end
-                                return AtomicPotential(
+                                return AtomicPotential{
+                                    $(Sout),
+                                    LocalPotential{$(Sout),Numerical},
+                                    NonLocalPotential{
+                                        $(Sout),
+                                        Numerical,
+                                        KleinmanBylanderProjector{$(Sout),Numerical},
+                                    },
+                                    $(VDout),
+                                    $(CDout),
+                                    $(SPout),
+                                    $(AUGout),
+                                }(
                                     potential.identifier,
                                     potential.symbol,
                                     $(op)(potential.local_potential, args...; kwargs...),
