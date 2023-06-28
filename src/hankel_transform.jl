@@ -1,20 +1,21 @@
 function ht(
-    r::AbstractVector,
-    r²f::AbstractVector,
-    q::AbstractVector{T},
+    r::AbstractVector{T},
+    r²f::AbstractVector{T},
+    q::AbstractVector{TT},
     l::Int,
     quadrature_method::NumericalQuadrature.QuadratureMethodOrType,
-)::Vector{T} where {T<:Real}
+)::Vector{TT} where {T<:Real,TT<:Real}
     # The phase factor (-i)^l is not included
     @assert length(r) == length(r²f) "`r` and `r²f` must be the same length"
 
-    weights_ = zero(r)
-    integrand_ = zero(r)
+    weights_ = similar(r, TT)
+    integrand_ = similar(r, TT)
+    F = similar(q, TT)
 
     NumericalQuadrature.integration_weights!(weights_, r, quadrature_method)
     jₗ::Function = fast_sphericalbesselj(l)
 
-    F = map(q) do qi
+    map!(F, q) do qi
         integrand_ .= r²f .* jₗ.(qi .* r)
         return 4π * dot(weights_, integrand_)
     end
