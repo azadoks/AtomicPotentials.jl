@@ -1,3 +1,32 @@
+for (AQ, args) in (
+    (:KleinmanBylanderProjector, (:n, :l, :j)),
+    (:ChargeDensity, ()),
+    (:AugmentationFunction, (:n, :m, :l)),
+)
+    eval(
+        quote
+            function ht(
+                quantity::$(AQ){RealSpace,Numerical},
+                q::AbstractVector,
+                quadrature_method::NumericalQuadrature.QuadratureMethodOrType=NumericalQuadrature.Simpson,
+                interpolation_method::Interpolation.InterpolationMethod=Interpolation.Spline(
+                    4
+                ),
+            )
+                F = ht(
+                    quantity.r, quantity.f, q, angular_momentum(quantity), quadrature_method
+                )
+                interpolator = Interpolation.construct_interpolator(
+                    q, F, interpolation_method
+                )
+                return $(AQ){FourierSpace,Numerical}(
+                    q, F, interpolator, [getfield(quantity, arg) for arg in $(args)]...
+                )
+            end
+        end,
+    )
+end
+
 for (op, Sin, Sout) in ((:ht, :RealSpace, :FourierSpace), (:iht, :FourierSpace, :RealSpace))
     eval(
         quote

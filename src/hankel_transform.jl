@@ -12,7 +12,7 @@ function ht(
     integrand_ = zero(r)
 
     NumericalQuadrature.integration_weights!(weights_, r, quadrature_method)
-    jₗ = fast_sphericalbesselj(l)
+    jₗ::Function = fast_sphericalbesselj(l)
 
     F = map(q) do qi
         integrand_ .= r²f .* jₗ.(qi .* r)
