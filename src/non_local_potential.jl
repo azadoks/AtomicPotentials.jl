@@ -20,3 +20,6 @@ function _apply(Vnl::NonLocalPotential, f::Function, args...; kwargs...)
     end
     return NonLocalPotential(β, Vnl.D)
 end
+
+count_n_proj(Vnl::NonLocalPotential, l::Integer) = length(Vnl.β[l]) * (2l + 1)
+count_n_proj(Vnl::NonLocalPotential) = sum(Base.Fix1(count_n_proj, Vnl), eachindex(Vnl.β))

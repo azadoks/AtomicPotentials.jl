@@ -69,3 +69,15 @@ function _apply(potential::AtomicPotential, f::Function, args...; kwargs...)
         f(potential.augmentation, args...; kwargs...),
     )
 end
+
+charge_ionic(pot::AtomicPotential) = charge_ionic(pot.local_potential)
+charge_nuclear(pot::AtomicPotential) = PeriodicTable.elements[pot.symbol].number
+n_elec_valence(pot::AtomicPotential) = round(Int, charge_ionic(pot))
+n_elec_core(pot::AtomicPotential) = round(Int, charge_nuclear(pot) - charge_ionic(pot))
+function energy_correction(T::Type{<:Real}, pot::AtomicPotential, args...; kwargs...)
+    return energy_correction(T, pot.local_potential, args...; kwargs...)
+end
+count_n_proj(pot::AtomicPotential, args...) = count_n_proj(pot.nonlocal_potential, args...)
+function count_n_proj(pots::AbstractVector{<:AtomicPotential}, positions::AbstractVector)
+    return dot(count_n_proj.(pots), length.(positions))
+end

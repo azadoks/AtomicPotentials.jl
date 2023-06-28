@@ -1,6 +1,10 @@
 abstract type AbstractLocalPotential{S,A} <: AbstractAtomicQuantity{S,A} end
 
-angular_momentum(quantity::AbstractLocalPotential)::Int = 0
+angular_momentum(Vloc::AbstractLocalPotential)::Int = 0
+
+charge_ionic(Vloc::AbstractLocalPotential) = Vloc.Z
+
+energy_correction(T::Type{<:Real}, ::AbstractLocalPotential) = zero(T)
 
 ## Numerical local potential
 struct LocalPotential{S,Numerical} <: AbstractLocalPotential{S,Numerical}
@@ -18,6 +22,16 @@ end
 function (Vloc::LocalPotential{RealSpace})(r::T)::T where {T}
     !iszero(r) && return Vloc.interpolator(r)  # Divergence at r=0
     return T(-Inf)
+end
+
+function energy_correction(
+    T::Type{<:Real},
+    Vloc::LocalPotential{RealSpace},
+    quadrature_method::NumericalQuadrature.QuadratureMethodOrType=NumericalQuadrature.Simpson,
+)
+    integrand = Vloc.r .* (Vloc.r .* Vloc.f .- -Vloc.Z)
+    weights = NumericalQuadrature.integration_weights(Vloc.r, quadrature_method)
+    return 4T(π) * dot(weights, integrand)
 end
 
 ## HGH local potential
@@ -102,6 +116,8 @@ struct GaussianLocalPotential{S,Analytical} <: AbstractLocalPotential{S,Analytic
     L
 end
 
+charge_ionic(Vloc::GaussianLocalPotential) = 0
+
 function (Vloc::GaussianLocalPotential{RealSpace})(r::T)::T where {T}
     return -Vloc.α / (sqrt(2T(π)) * Vloc.L) * exp(-(r / Vloc.L)^2 / 2)
 end
@@ -118,6 +134,8 @@ struct CohenBergstresserLocalPotential{FourierSpace,Analytical} <:
     V_sym  # Map |G|^2 (in units of (2π / lattice_constant)^2) to form factors
     lattice_constant  # Lattice constant (in Bohr) which is assumed
 end
+
+charge_ionic(Vloc::CohenBergstresserLocalPotential) = 4
 
 function (Vloc::CohenBergstresserLocalPotential{FourierSpace})(q::T)::T where {T}
     iszero(q) && return zero(T)  # Compensating charge background

@@ -102,7 +102,7 @@ function iht(
     quadrature_method::NumericalQuadrature.QuadratureMethodOrType,
 )
     # The phase factor (i)^l is not included.
-    # The inverse Fourier-Hankel transform is the same as the direct transform
+    # The inverse Hankel transform is the same as the direct transform
     # except for a normalization factor (1/(2π)³ and the sign of the phase factor
     # (i)ˡ vs. (-i)ˡ
     f = ht(q, q .^ 2 .* F, r, l, quadrature_method) ./ (2π)^3

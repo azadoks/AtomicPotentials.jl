@@ -43,6 +43,7 @@ export HghLocalPotential
 export CoulombLocalPotential
 export GaussianLocalPotential
 export CohenBergstresserLocalPotential
+export energy_correction
 include("local_potential.jl")
 
 ## Projectors and projector-like quantitities
@@ -63,6 +64,7 @@ include("augmentation.jl")
 
 ## Non-local potentials
 export NonLocalPotential
+export count_n_proj
 include("non_local_potential.jl")
 
 ## Charge densities
@@ -73,7 +75,10 @@ include("charge_density.jl")
 
 ## Atomic potential -- collection of atomic quantities
 export AtomicPotential
-export get_quantities
+export charge_ionic
+export charge_nuclear
+export n_elec_valence
+export n_elec_core
 include("atomic_potential.jl")
 include("pseudopotentialio.jl")
 
