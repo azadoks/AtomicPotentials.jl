@@ -1,11 +1,7 @@
-@testset "KleinmanBylanderProjector" begin
-end
+@testset "KleinmanBylanderProjector" begin end
 
-@testset "HghKleinmanBylanderProjector" begin
-end
+@testset "HghKleinmanBylanderProjector" begin end
 
-@testset "StateProjector" begin
-end
+@testset "StateProjector" begin end
 
-@testset "HydrogenicProjector" begin
-end
+@testset "HydrogenicProjector" begin end

@@ -1,15 +1,13 @@
 abstract type AbstractChargeDensity{S,A} <: AbstractAtomicQuantity{S,A} end
 angular_momentum(quantity::AbstractChargeDensity)::Int = 0
 
-abstract type AbstractValenceChargeDensity{S,A} <: AbstractChargeDensity{S,A} end
-
-struct ValenceChargeDensity{S,Numeric} <: AbstractValenceChargeDensity{S,Numeric}
+struct ChargeDensity{S,Numeric} <: AbstractChargeDensity{S,Numeric}
     r::AbstractVector
     f::AbstractVector  # r²ρval(r) in real-space; ρval(q) in Fourier-space
     interpolator  # r²ρval(r) in real-space; ρval(q) in Fourier-space
 end
 
-struct GaussianChargeDensity{S,Analytical} <: AbstractValenceChargeDensity{S,Analytical}
+struct GaussianChargeDensity{S,Analytical} <: AbstractChargeDensity{S,Analytical}
     Z
     L
 end
@@ -57,12 +55,4 @@ function _gaussian_density_decay_length(n_elec_core, n_elec_valence)
         [2.0, 2.00, 1.55, 1.25, 1.15, 1.10, 1.05, 1.0, 0.95, 0.9, 0.85, 0.85, 0.8]
     end
     return data[min(n_elec_valence, length(data))]
-end
-
-abstract type AbstractCoreChargeDensity{S,A} <: AbstractChargeDensity{S,A} end
-
-struct CoreChargeDensity{S,Numeric} <: AbstractCoreChargeDensity{S,Numeric}
-    r::AbstractVector
-    f::AbstractVector  # r²ρcore(r) in real-space; ρcore(q) in Fourier-space
-    interpolator  # r²ρcore(r) in real-space; ρcore(q) in Fourier-space
 end

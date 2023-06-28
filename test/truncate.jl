@@ -1,2 +1,1 @@
-@testset "truncate" begin
-end
+@testset "truncate" begin end

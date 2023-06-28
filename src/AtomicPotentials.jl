@@ -67,13 +67,8 @@ include("non_local_potential.jl")
 
 ## Charge densities
 export AbstractChargeDensity
-# Valence charge densities
-export AbstractValenceChargeDensity
-export ValenceChargeDensity
+export ChargeDensity
 export GaussianChargeDensity
-# Core charge density
-export AbstractCoreChargeDensity
-export CoreChargeDensity
 include("charge_density.jl")
 
 ## Atomic potential -- collection of atomic quantities
@@ -82,10 +77,10 @@ export get_quantities
 include("atomic_potential.jl")
 include("pseudopotentialio.jl")
 
-## Fourier-Hankel transforms
-export ht  # Fourier-Hankel transform
-export iht  # Inverse Fourier-Hankel transform
-include("fourier_hankel_transform.jl")
+## Hankel transforms
+export ht  # Hankel transform
+export iht  # Inverse Hankel transform
+include("hankel_transform.jl")
 
 ## Interpolation
 export interpolate_onto

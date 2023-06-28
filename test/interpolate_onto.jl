@@ -1,7 +1,5 @@
 @testset "interpolate_onto" begin
-    @testset "Numerical" begin
-    end
+    @testset "Numerical" begin end
 
-    @testset "Analytical" begin
-    end
+    @testset "Analytical" begin end
 end

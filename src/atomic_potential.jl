@@ -2,10 +2,10 @@ struct AtomicPotential{
     S<:EvaluationSpace,
     L<:AbstractLocalPotential{S},
     NL<:Union{Nothing,NonLocalPotential{S}},
-    VD<:Union{Nothing,AbstractValenceChargeDensity{S}},
-    CD<:Union{Nothing,AbstractCoreChargeDensity{S}},
+    VD<:Union{Nothing,AbstractChargeDensity{S}},
+    CD<:Union{Nothing,AbstractChargeDensity{S}},
     SP<:Union{Nothing,AbstractStateProjector{S}},
-    AUG<:Union{Nothing,Augmentation{S}}
+    AUG<:Union{Nothing,Augmentation{S}},
 }
     identifier::Any
     symbol::Union{Nothing,Symbol}
@@ -25,7 +25,7 @@ function AtomicPotential(
     valence_density=nothing,
     core_density=nothing,
     states=OffsetVector(Vector{Nothing}[], 0:-1),
-    augmentation=nothing
+    augmentation=nothing,
 )
     return AtomicPotential(
         identifier,
@@ -35,7 +35,7 @@ function AtomicPotential(
         valence_density,
         core_density,
         states,
-        augmentation
+        augmentation,
     )
 end
 

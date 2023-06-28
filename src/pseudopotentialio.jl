@@ -39,7 +39,7 @@ function AtomicPotential(
         ρcore_interpolator = Interpolation.construct_interpolator(
             r, ρcore_f, interpolation_method
         )
-        ρcore = CoreChargeDensity{RealSpace,Numerical}(r, ρcore_f, ρcore_interpolator)
+        ρcore = ChargeDensity{RealSpace,Numerical}(r, ρcore_f, ρcore_interpolator)
     end
 
     if isnothing(psp8_file.rhov)
@@ -49,7 +49,7 @@ function AtomicPotential(
         ρval_interpolator = Interpolation.construct_interpolator(
             r, ρval_f, interpolation_method
         )
-        ρval = ValenceChargeDensity{RealSpace,Numerical}(r, ρval_f, ρval_interpolator)
+        ρval = ChargeDensity{RealSpace,Numerical}(r, ρval_f, ρval_interpolator)
     end
 
     states = OffsetVector(Vector{Nothing}[], 0:-1)
@@ -259,7 +259,7 @@ function AtomicPotential(
         ρcore_interpolator = Interpolation.construct_interpolator(
             ρcore_r, ρcore_f, interpolation_method
         )
-        ρcore = CoreChargeDensity{RealSpace,Numerical}(ρcore_r, ρcore_f, ρcore_interpolator)
+        ρcore = ChargeDensity{RealSpace,Numerical}(ρcore_r, ρcore_f, ρcore_interpolator)
     end
 
     ## Valence charge density
@@ -271,7 +271,7 @@ function AtomicPotential(
         ρval_interpolator = Interpolation.construct_interpolator(
             ρval_r, ρval_f, interpolation_method
         )
-        ρval = ValenceChargeDensity{RealSpace,Numerical}(ρval_r, ρval_f, ρval_interpolator)
+        ρval = ChargeDensity{RealSpace,Numerical}(ρval_r, ρval_f, ρval_interpolator)
     end
 
     ## Pseudo-atomic states
