@@ -64,6 +64,7 @@ include("augmentation.jl")
 
 ## Non-local potentials
 export NonLocalPotential
+export count_n_proj_radial
 export count_n_proj
 include("non_local_potential.jl")
 
