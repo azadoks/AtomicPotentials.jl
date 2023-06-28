@@ -7,14 +7,17 @@ function ht!(
     l::Int,
     quadrature_method::NumericalQuadrature.QuadratureMethodOrType,
 )::AbstractVector{TT} where {T<:Real,TT<:Real}
+    weights_ = @view weights_[eachindex(r)]
+    integrand_ = @view integrand_[eachindex(r)]
     NumericalQuadrature.integration_weights!(weights_, r, quadrature_method)
-
-    map!(F, q) do qi
+    F = map(q) do qi
         integrand_ .= r²f .* fast_sphericalbesselj.(l, qi .* r)
         return 4π * dot(weights_, integrand_)
     end
     return F
 end
+
+ht!(::AbstractVector, ::AbstractVector, ::Nothing, args...; kwargs...) = nothing
 
 function ht(
     r::AbstractVector{T},
@@ -78,6 +81,25 @@ function ht(
     F =
         ht(Vloc.r, r²f, q, angular_momentum(Vloc), quadrature_method) .+
         4π .* (-Vloc.Z ./ q .^ 2)
+    interpolator = Interpolation.construct_interpolator(
+        q[(begin + 1):end], F[(begin + 1):end], interpolation_method
+    )
+    return LocalPotential{FourierSpace,Numerical}(q, F, interpolator, Vloc.Z)
+end
+
+function ht!(
+    weights_::AbstractVector,
+    integrand_::AbstractVector{T},
+    Vloc::LocalPotential{RealSpace,Numerical},
+    q::AbstractVector{T},
+    quadrature_method::NumericalQuadrature.QuadratureMethodOrType=NumericalQuadrature.Simpson,
+    interpolation_method::Interpolation.InterpolationMethod=Interpolation.Spline(4),
+)::LocalPotential{FourierSpace,Numerical} where {T<:Real}
+    r²f = Vloc.r .* (Vloc.r .* Vloc.f .- -Vloc.Z)  # == r² (Vloc - -Z/r)
+    F =
+        ht!(
+            weights_, integrand_, Vloc.r, r²f, q, angular_momentum(Vloc), quadrature_method
+        ) .+ 4π .* (-Vloc.Z ./ q .^ 2)
     interpolator = Interpolation.construct_interpolator(
         q[(begin + 1):end], F[(begin + 1):end], interpolation_method
     )

@@ -86,3 +86,27 @@ function count_n_proj(pots::AbstractVector{<:AtomicPotential}, positions::Abstra
 end
 lmax(pot::AtomicPotential) = lmax(pot.nonlocal_potential)
 angular_momenta(pot::AtomicPotential) = angular_momenta(pot.nonlocal_potential)
+function max_r_length(pot::AtomicPotential)
+    return maximum(
+        max_r_length,
+        [
+            pot.local_potential,
+            pot.nonlocal_potential,
+            pot.valence_density,
+            pot.core_density,
+            pot.states,
+            pot.augmentation,
+        ];
+        init=0,
+    )
+end
+max_r_length(::Nothing) = 0
+max_r_length(::AbstractAtomicQuantity{S,Analytical}) where {S} = 0
+max_r_length(x::AbstractAtomicQuantity{S,Numerical}) where {S} = length(x.r)
+function max_r_length(x::NonLocalPotential{S,Numerical}) where {S}
+    return maximum(βl -> maximum(max_r_length, βl; init=0), x.β; init=0)
+end
+function max_r_length(x::Augmentation)
+    return maximum(Ql -> maximum(max_r_length, Ql; init=0), x.Q; init=0)
+end
+max_r_length(x::AbstractVector) = maximum(max_r_length, x; init=0)

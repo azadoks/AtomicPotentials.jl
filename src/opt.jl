@@ -5,16 +5,24 @@ for (AQ, args) in (
 )
     eval(
         quote
-            function ht(
+            function ht!(
+                weights_::AbstractVector,
+                integrand_::AbstractVector{T},
                 quantity::$(AQ){RealSpace,Numerical},
-                q::AbstractVector,
+                q::AbstractVector{T},
                 quadrature_method::NumericalQuadrature.QuadratureMethodOrType=NumericalQuadrature.Simpson,
                 interpolation_method::Interpolation.InterpolationMethod=Interpolation.Spline(
                     4
                 ),
-            )
-                F = ht(
-                    quantity.r, quantity.f, q, angular_momentum(quantity), quadrature_method
+            ) where {T<:Real}
+                F = ht!(
+                    weights_,
+                    integrand_,
+                    quantity.r,
+                    quantity.f,
+                    q,
+                    angular_momentum(quantity),
+                    quadrature_method,
                 )
                 interpolator = Interpolation.construct_interpolator(
                     q, F, interpolation_method
@@ -27,21 +35,25 @@ for (AQ, args) in (
     )
 end
 
-for (op, Sin, Sout) in ((:ht, :RealSpace, :FourierSpace), (:iht, :FourierSpace, :RealSpace))
+for (op!, op, Sin, Sout) in
+    ((:ht!, :ht, :RealSpace, :FourierSpace), (:iht!, :iht, :FourierSpace, :RealSpace))
     eval(
         quote
-            function $(op)(
+            function $(op!)(
+                weights_::AbstractVector,
+                integrand_::AbstractVector{T},
                 Vnl::NonLocalPotential{
                     $(Sin),Numerical,KleinmanBylanderProjector{$(Sin),Numerical}
                 },
+                q::AbstractVector{T},
                 args...;
                 kwargs...,
             )::NonLocalPotential{
                 $(Sout),Numerical,KleinmanBylanderProjector{$(Sout),Numerical}
-            }
+            } where {T<:Real}
                 β = map(Vnl.β) do βl
                     map(βl) do βln
-                        return $(op)(βln, args...; kwargs...)
+                        return $(op!)(weights_, integrand_, βln, q, args...; kwargs...)
                     end
                 end
                 return NonLocalPotential(β, Vnl.D)
@@ -126,24 +138,37 @@ for (op, Sin, Sout) in ((:ht, :RealSpace, :FourierSpace), (:iht, :FourierSpace, 
                                     $(SPin),
                                     $(AUGin),
                                 },
+                                q::AbstractVector{T},
                                 args...;
                                 kwargs...,
-                            )::AtomicPotential{
-                                $(Sout),
-                                LocalPotential{$(Sout),Numerical},
-                                NonLocalPotential{
-                                    $(Sout),
-                                    Numerical,
-                                    KleinmanBylanderProjector{$(Sout),Numerical},
-                                },
-                                $(VDout),
-                                $(CDout),
-                                $(SPout),
-                                $(AUGout),
-                            }
+                            ) where {T<:Real}
+                                # ::AtomicPotential{
+                                #     $(Sout),
+                                #     LocalPotential{$(Sout),Numerical},
+                                #     NonLocalPotential{
+                                #         $(Sout),
+                                #         Numerical,
+                                #         KleinmanBylanderProjector{$(Sout),Numerical},
+                                #     },
+                                #     $(VDout),
+                                #     $(CDout),
+                                #     $(SPout),
+                                #     $(AUGout),
+                                # }
+                                n = max_r_length(potential)
+                                weights_ = Vector{Float64}(undef, n)
+                                integrand_ = Vector{T}(undef, n)
+
                                 states = map(potential.states) do states_l
                                     map(states_l) do state_ln
-                                        return $(op)(state_ln, args...; kwargs...)
+                                        return $(op!)(
+                                            weights_,
+                                            integrand_,
+                                            state_ln,
+                                            q,
+                                            args...;
+                                            kwargs...,
+                                        )
                                     end
                                 end
                                 return AtomicPotential{
@@ -161,12 +186,47 @@ for (op, Sin, Sout) in ((:ht, :RealSpace, :FourierSpace), (:iht, :FourierSpace, 
                                 }(
                                     potential.identifier,
                                     potential.symbol,
-                                    $(op)(potential.local_potential, args...; kwargs...),
-                                    $(op)(potential.nonlocal_potential, args...; kwargs...),
-                                    $(op)(potential.valence_density, args...; kwargs...),
-                                    $(op)(potential.core_density, args...; kwargs...),
+                                    $(op!)(
+                                        weights_,
+                                        integrand_,
+                                        potential.local_potential,
+                                        q,
+                                        args...;
+                                        kwargs...,
+                                    ),
+                                    $(op!)(
+                                        weights_,
+                                        integrand_,
+                                        potential.nonlocal_potential,
+                                        q,
+                                        args...;
+                                        kwargs...,
+                                    ),
+                                    $(op!)(
+                                        weights_,
+                                        integrand_,
+                                        potential.valence_density,
+                                        q,
+                                        args...;
+                                        kwargs...,
+                                    ),
+                                    $(op!)(
+                                        weights_,
+                                        integrand_,
+                                        potential.core_density,
+                                        q,
+                                        args...;
+                                        kwargs...,
+                                    ),
                                     states,
-                                    $(op)(potential.augmentation, args...; kwargs...),
+                                    $(op!)(
+                                        weights_,
+                                        integrand_,
+                                        potential.augmentation,
+                                        q,
+                                        args...;
+                                        kwargs...,
+                                    ),
                                 )
                             end
                         end,
