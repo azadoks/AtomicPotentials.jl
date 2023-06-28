@@ -43,7 +43,7 @@ end
 
 # [GTH98] (1)
 function (Vloc::HghLocalPotential{RealSpace})(r::T)::T where {T<:Real}
-    r += iszer(r) ? eps(T) : zero(T)  # quick hack for the division by zero below
+    r += iszero(r) ? eps(T) : zero(T)  # quick hack for the division by zero below
     rr::T = r / Vloc.r
     c = Vloc.c
     return -Vloc.z / r * erf(rr / sqrt(T(2))) +
@@ -52,6 +52,7 @@ end
 
 # [GTH98] (6) except they do it with plane waves normalized by 1/sqrt(Ω).
 function (Vloc::HghLocalPotential{FourierSpace})(q::T)::T where {T<:Real}
+    iszero(q) && return zero(T)
     x::T = q * Vloc.r
     return _hgh_local_potential_polynomial_fourier(Vloc, x) * exp(-x^2 / 2) / x^2
 end
