@@ -84,3 +84,5 @@ count_n_proj(pot::AtomicPotential, args...) = count_n_proj(pot.nonlocal_potentia
 function count_n_proj(pots::AbstractVector{<:AtomicPotential}, positions::AbstractVector)
     return dot(count_n_proj.(pots), length.(positions))
 end
+lmax(pot::AtomicPotential) = lmax(pot.nonlocal_potential)
+angular_momenta(pot::AtomicPotential) = angular_momenta(pot.nonlocal_potential)
