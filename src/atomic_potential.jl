@@ -78,7 +78,7 @@ function energy_correction(T::Type{<:Real}, pot::AtomicPotential, args...; kwarg
     return energy_correction(T, pot.local_potential, args...; kwargs...)
 end
 function count_n_proj_radial(pot::AtomicPotential, args...)
-    return count_n_proj_raidal(pot.nonlocal_potential, args...)
+    return count_n_proj_radial(pot.nonlocal_potential, args...)
 end
 count_n_proj(pot::AtomicPotential, args...) = count_n_proj(pot.nonlocal_potential, args...)
 function count_n_proj(pots::AbstractVector{<:AtomicPotential}, positions::AbstractVector)
