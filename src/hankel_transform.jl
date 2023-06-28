@@ -133,6 +133,25 @@ function iht(
     return f
 end
 
+function iht!(
+    weights_::AbstractVector,
+    integrand_::AbstractVector,
+    q::AbstractVector,
+    F::AbstractVector,
+    r::AbstractVector,
+    l::Int,
+    quadrature_method::NumericalQuadrature.QuadratureMethodOrType,
+)
+    # The phase factor (i)^l is not included.
+    # The inverse Hankel transform is the same as the direct transform
+    # except for a normalization factor (1/(2π)³ and the sign of the phase factor
+    # (i)ˡ vs. (-i)ˡ
+    f = ht!(weights_, integrand_, q, q .^ 2 .* F, r, l, quadrature_method) ./ (2π)^3
+    return f
+end
+
+iht!(::AbstractVector, ::AbstractVector, ::Nothing, args...; kwargs...) = nothing
+
 iht(::Nothing, args...; kwargs...) = nothing
 
 # args... are included for interface consistency with numeric `iht`, which requires
@@ -166,7 +185,26 @@ function iht(
     interpolator = Interpolation.construct_interpolator(
         r[(begin + 1):end], f[(begin + 1):end], interpolation_method
     )
-    return _construct_dual_quantity(Vloc; r=r, f=f, interpolator=interpolator)
+    return LocalPotential{RealSpace,Numerical}(r, f, interpolator, Vloc.Z)
+end
+
+function iht!(
+    weights_::AbstractVector,
+    integrand_::AbstractVector,
+    Vloc::LocalPotential{FourierSpace},
+    r::AbstractVector,
+    quadrature_method::NumericalQuadrature.QuadratureMethodOrType=NumericalQuadrature.Simpson,
+    interpolation_method::Interpolation.InterpolationMethod=Interpolation.Spline(4),
+)::LocalPotential{RealSpace}
+    q²F = Vloc.r .^ 2 .* Vloc.f .- -Vloc.Z  # == q² (Vloc - -Z/q²)
+    f =
+        ht!(
+            weights_, integrand_, Vloc.r, q²F, r, angular_momentum(Vloc), quadrature_method
+        ) .+ 4π / (2π)^3 .* (-Vloc.Z ./ r)
+    interpolator = Interpolation.construct_interpolator(
+        r[(begin + 1):end], f[(begin + 1):end], interpolation_method
+    )
+    return LocalPotential{RealSpace,Numerical}(r, f, interpolator, Vloc.Z)
 end
 
 for (op, S) in ((:ht, :RealSpace), (:iht, :FourierSpace))

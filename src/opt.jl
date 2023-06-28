@@ -2,6 +2,7 @@ for (AQ, args) in (
     (:KleinmanBylanderProjector, (:n, :l, :j)),
     (:ChargeDensity, ()),
     (:AugmentationFunction, (:n, :m, :l)),
+    (:StateProjector, (:n, :l, :j)),
 )
     eval(
         quote
@@ -29,6 +30,33 @@ for (AQ, args) in (
                 )
                 return $(AQ){FourierSpace,Numerical}(
                     q, F, interpolator, [getfield(quantity, arg) for arg in $(args)]...
+                )
+            end
+            function iht!(
+                weights_::AbstractVector,
+                integrand_::AbstractVector{T},
+                quantity::$(AQ){FourierSpace,Numerical},
+                r::AbstractVector{T},
+                quadrature_method::NumericalQuadrature.QuadratureMethodOrType=NumericalQuadrature.Simpson,
+                interpolation_method::Interpolation.InterpolationMethod=Interpolation.Spline(
+                    4
+                ),
+            ) where {T<:Real}
+                f = iht!(
+                    weights_,
+                    integrand_,
+                    quantity.r,
+                    quantity.f,
+                    r,
+                    angular_momentum(quantity),
+                    quadrature_method,
+                )
+                f .*= r .^ 2
+                interpolator = Interpolation.construct_interpolator(
+                    r, f, interpolation_method
+                )
+                return $(AQ){RealSpace,Numerical}(
+                    r, f, interpolator, [getfield(quantity, arg) for arg in $(args)]...
                 )
             end
         end,
