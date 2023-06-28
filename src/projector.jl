@@ -1,5 +1,4 @@
 abstract type AbstractProjector{S,A} <: AbstractAtomicQuantity{S,A} end
-angular_momentum(quantity::AbstractProjector)::Int = quantity.l
 
 ### KB projectors
 abstract type AbstractKleinmanBylanderProjector{S,A} <: AbstractProjector{S,A} end
@@ -116,6 +115,6 @@ struct HydrogenicProjector{S,A} <: AbstractStateProjector{S,A}
         return new{FourierSpace,Numerical}(q, F, interpolator, n, l, α)
     end
 end
-function ifht(proj::HydrogenicProjector, r::AbstractVector, args...; kwargs...)
+function iht(proj::HydrogenicProjector, r::AbstractVector, args...; kwargs...)
     return HydrogenicProjector{RealSpace}(r, proj.n, proj.l, proj.α)
 end

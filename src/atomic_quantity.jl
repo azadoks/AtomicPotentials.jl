@@ -9,7 +9,7 @@ abstract type Analytical <: Analyticity end  # Has an analytical (inverse) Fouri
 abstract type Numerical <: Analyticity end  # Must be numerically (inversely) Fourier transformed
 
 abstract type AbstractAtomicQuantity{S<:EvaluationSpace,A<:Analyticity} end
-# angular_momentum(quantity::AbstractAtomicQuantity)::Int
+angular_momentum(quantity::AbstractAtomicQuantity)::Int = quantity.l
 
 function Base.show(io::IO, quantity::AbstractAtomicQuantity{S,Numerical}) where {S}
     r_min, r_max = extrema(quantity.r)

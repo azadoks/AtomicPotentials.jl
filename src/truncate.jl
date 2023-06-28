@@ -21,3 +21,11 @@ function Base.truncate(quantity::AbstractAtomicQuantity{S,Numerical}; kwargs...)
     f, r = Base.truncate(quantity.f, quantity.r; kwargs...)
     return _construct_similar_quantity(quantity; f=f, r=r)
 end
+
+function Base.truncate(
+    x::Union{NonLocalPotential{S,Numerical},Augmentation{S,Numerical},AtomicPotential},
+    args...;
+    kwargs...,
+) where {S}
+    return _apply(x, truncate, args...; kwargs...)
+end

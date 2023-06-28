@@ -34,20 +34,7 @@ export Analytical
 export Numerical
 # Abstract type and important associated functions
 export AbstractAtomicQuantity
-export interpolate_onto
 include("atomic_quantity.jl")
-
-## Fourier-Hankel transforms
-export fht  # Fourier-Hankel transform
-export ifht  # Inverse Fourier-Hankel transform
-include("fourier_hankel_transform.jl")
-
-## Interpolation
-export interpolate_onto
-include("interpolate_onto.jl")
-
-## Truncation
-include("truncate.jl")
 
 ## Local potentials
 export AbstractLocalPotential
@@ -75,9 +62,7 @@ export AugmentationFunction
 include("augmentation.jl")
 
 ## Non-local potentials
-export AbstractNonLocalPotential
-export NormConservingNonLocalPotential
-export UltrasoftNonLocalPotential
+export NonLocalPotential
 include("non_local_potential.jl")
 
 ## Charge densities
@@ -97,6 +82,18 @@ export get_quantities
 include("atomic_potential.jl")
 include("pseudopotentialio.jl")
 
+## Fourier-Hankel transforms
+export ht  # Fourier-Hankel transform
+export iht  # Inverse Fourier-Hankel transform
+include("fourier_hankel_transform.jl")
+
+## Interpolation
+export interpolate_onto
+include("interpolate_onto.jl")
+
+## Truncation
+include("truncate.jl")
+
 @setup_workload begin
     psp_files = []
     for psp_file_tuple in [
@@ -109,8 +106,8 @@ include("pseudopotentialio.jl")
     @compile_workload begin
         for psp_file in psp_files
             pot = AtomicPotential(psp_file)
-            pot_q = fht(pot, 0.0:1.0:10.0)
-            pot′ = ifht(pot_q, 0.0:0.1:1.0)
+            pot_q = ht(pot, 0.0:1.0:10.0)
+            pot′ = iht(pot_q, 0.0:0.1:1.0)
         end
     end
 end

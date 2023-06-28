@@ -1,4 +1,4 @@
-struct AugmentationFunction{S,A} <: AbstractAtomicQuantity{S,A}
+struct AugmentationFunction{S,Numerical} <: AbstractAtomicQuantity{S,Numerical}
     r::AbstractVector
     f::AbstractVector
     interpolator
@@ -6,20 +6,16 @@ struct AugmentationFunction{S,A} <: AbstractAtomicQuantity{S,A}
     m::Int
     l::Int
 end
-angular_momentum(aug::AugmentationFunction) = aug.l
 
-function AugmentationFunction{S}(
-    r::AbstractVector, f::AbstractVector, interpolator, n::Integer, m::Integer, l::Integer
-) where {S<:EvaluationSpace}
-    return AugmentationFunction{S,Numerical}(r, f, interpolator, n, m, l)
+struct Augmentation{S<:EvaluationSpace,QT<:AugmentationFunction{S}}
+    Q::OffsetVector{Matrix{QT},Vector{Matrix{QT}}}
+    q::OffsetVector{Matrix,Vector{Matrix}}
 end
-function fht(
-    ::AugmentationFunction{RealSpace,Numerical}, q::AbstractVector, args...; kwargs...
-)
-    return error("`fht` not implemented for `AugmentationFunction`")
-end
-function ifht(
-    ::AugmentationFunction{RealSpace,Numerical}, r::AbstractVector, args...; kwargs...
-)
-    return error("`ifht` not implemented for `AugmentationFunction`")
+function _apply(aug::Augmentation, f::Function, args...; kwargs...)
+    Q = map(aug.Q) do Ql
+        map(Ql) do Qlnm
+            f(Qlnm, args...; kwargs...)
+        end
+    end
+    return Augmentation(Q, aug.q)
 end

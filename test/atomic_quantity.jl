@@ -1,9 +1,9 @@
-# TODO: test `fourier_transform`
+# TODO: test `ht`
 # TODO:    for analytical quantities -> just change the type parameter
-# TODO:    for numerical quantities -> perform the Hankel-Fourier transform and store
+# TODO:    for numerical quantities -> perform the Hankel transform and store
 # TODO:        the new mesh & function
 
-# TODO: test `inverse_fourier_transform`
+# TODO: test `iht`
 # TODO:    ditto ^
 
 # TODO: test `interpolate_onto`

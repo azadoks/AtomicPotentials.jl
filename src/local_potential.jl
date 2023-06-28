@@ -16,7 +16,7 @@ function (Vloc::LocalPotential{RealSpace})(r::T)::T where {T}
     !iszero(r) && return Vloc.interpolator(r)  # Divergence at r=0
     return T(-Inf)
 end
-function fht(
+function ht(
     Vloc::LocalPotential{RealSpace},
     q::AbstractVector,
     quadrature_method::NumericalQuadrature.QuadratureMethodOrType=NumericalQuadrature.Simpson,
@@ -24,14 +24,14 @@ function fht(
 )::LocalPotential{FourierSpace}
     r²f = Vloc.r .* (Vloc.r .* Vloc.f .- -Vloc.Z)  # == r² (Vloc - -Z/r)
     F =
-        fht(Vloc.r, r²f, q, angular_momentum(Vloc), quadrature_method) .+
+        ht(Vloc.r, r²f, q, angular_momentum(Vloc), quadrature_method) .+
         4π .* (-Vloc.Z ./ q .^ 2)
     interpolator = Interpolation.construct_interpolator(
         q[(begin + 1):end], F[(begin + 1):end], interpolation_method
     )
     return _construct_dual_quantity(Vloc; r=q, f=F, interpolator=interpolator)
 end
-function ifht(
+function iht(
     Vloc::LocalPotential{FourierSpace},
     r::AbstractVector,
     quadrature_method::NumericalQuadrature.QuadratureMethodOrType=NumericalQuadrature.Simpson,
@@ -39,7 +39,7 @@ function ifht(
 )::LocalPotential{RealSpace}
     q²F = Vloc.r .^ 2 .* Vloc.f .- -Vloc.Z  # == q² (Vloc - -Z/q²)
     f =
-        fht(Vloc.r, q²F, r, angular_momentum(Vloc), quadrature_method) .+
+        ht(Vloc.r, q²F, r, angular_momentum(Vloc), quadrature_method) .+
         4π / (2π)^3 .* (-Vloc.Z ./ r)
     interpolator = Interpolation.construct_interpolator(
         r[(begin + 1):end], f[(begin + 1):end], interpolation_method
