@@ -8,7 +8,7 @@ struct KleinmanBylanderProjector{S,Numerical} <:
        AbstractKleinmanBylanderProjector{S,Numerical}
     r::AbstractVector
     f::AbstractVector  # r²β(r) in real-space; β(q) in Fourier-space
-    interpolator  # r²β(r) in real-space; β(q) in Fourier-space
+    interpolator::BSplineKit.SplineWrapper  # r²β(r) in real-space; β(q) in Fourier-space
     n::Int
     l::Int
     j::Real
@@ -66,7 +66,7 @@ abstract type AbstractStateProjector{S,A} <: AbstractProjector{S,A} end
 struct StateProjector{S,Numerical} <: AbstractStateProjector{S,Numerical}
     r::AbstractVector
     f::AbstractVector  # r²χ(r) in real-space; χ(q) in Fourier-space
-    interpolator  # r²χ(r) in real-space; χ(q) in Fourier-space
+    interpolator::BSplineKit.SplineWrapper  # r²χ(r) in real-space; χ(q) in Fourier-space
     n::Int
     l::Int
     j::Real

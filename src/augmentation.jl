@@ -1,7 +1,7 @@
 struct AugmentationFunction{S,Numerical} <: AbstractAtomicQuantity{S,Numerical}
     r::AbstractVector
     f::AbstractVector
-    interpolator
+    interpolator::BSplineKit.SplineWrapper
     n::Int
     m::Int
     l::Int

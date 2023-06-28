@@ -1,5 +1,6 @@
 module AtomicPotentials
 
+using BSplineKit
 using LinearAlgebra
 using OffsetArrays
 using OrderedCollections
@@ -99,22 +100,22 @@ include("truncate.jl")
 
 include("opt.jl")
 
-# @setup_workload begin
-#     psp_files = []
-#     for psp_file_tuple in [
-#         ("pd_nc_sr_pbe_standard_0.4.1_psp8", "Si.psp8"),
-#         ("pd_nc_sr_pbe_standard_0.4.1_upf", "Si.upf"),
-#         ("hgh_lda_hgh", "si-q4.hgh"),
-#     ]
-#         push!(psp_files, PseudoPotentialIO.load_psp_file(psp_file_tuple...))
-#     end
-#     @compile_workload begin
-#         for psp_file in psp_files
-#             pot = AtomicPotential(psp_file)
-#             pot_q = ht(pot, 0.0:1.0:10.0)
-#             pot′ = iht(pot_q, 0.0:0.1:1.0)
-#         end
-#     end
-# end
+@setup_workload begin
+    psp_files = []
+    for psp_file_tuple in [
+        ("pd_nc_sr_pbe_standard_0.4.1_psp8", "Si.psp8"),
+        ("pd_nc_sr_pbe_standard_0.4.1_upf", "Si.upf"),
+        ("hgh_lda_hgh", "si-q4.hgh"),
+    ]
+        push!(psp_files, PseudoPotentialIO.load_psp_file(psp_file_tuple...))
+    end
+    @compile_workload begin
+        for psp_file in psp_files
+            pot = AtomicPotential(psp_file)
+            pot_q = ht(pot, 0.0:1.0:10.0)
+            pot′ = iht(pot_q, 0.0:0.1:1.0)
+        end
+    end
+end
 
 end # module AtomicPotentials

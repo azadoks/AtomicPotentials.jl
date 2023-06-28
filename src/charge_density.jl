@@ -4,7 +4,7 @@ angular_momentum(quantity::AbstractChargeDensity)::Int = 0
 struct ChargeDensity{S,Numeric} <: AbstractChargeDensity{S,Numeric}
     r::AbstractVector
     f::AbstractVector  # r²ρval(r) in real-space; ρval(q) in Fourier-space
-    interpolator  # r²ρval(r) in real-space; ρval(q) in Fourier-space
+    interpolator::BSplineKit.SplineWrapper  # r²ρval(r) in real-space; ρval(q) in Fourier-space
 end
 
 struct GaussianChargeDensity{S,Analytical} <: AbstractChargeDensity{S,Analytical}

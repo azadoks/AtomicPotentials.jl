@@ -10,17 +10,17 @@ energy_correction(T::Type{<:Real}, ::AbstractLocalPotential) = zero(T)
 struct LocalPotential{S,Numerical} <: AbstractLocalPotential{S,Numerical}
     r::AbstractVector
     f::AbstractVector  # Vloc(r) in real-space; Vloc(q) in Fourier-space
-    interpolator  # Vloc(r) in real-space; Vloc(q) in Fourier-Space
+    interpolator::BSplineKit.SplineWrapper  # Vloc(r) in real-space; Vloc(q) in Fourier-Space
     Z
 end
 
 function (Vloc::LocalPotential{FourierSpace})(q::T)::T where {T}
-    !iszero(q) && return Vloc.interpolator(q)  # Compensating charge background
+    !iszero(q) && return Interpolation.evaluate(Vloc.interpolator, q)  # Compensating charge background
     return zero(T)
 end
 
 function (Vloc::LocalPotential{RealSpace})(r::T)::T where {T}
-    !iszero(r) && return Vloc.interpolator(r)  # Divergence at r=0
+    !iszero(r) && return Interpolation.evaluate(Vloc.interpolator, r)  # Divergence at r=0
     return T(-Inf)
 end
 
