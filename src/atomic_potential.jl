@@ -77,6 +77,9 @@ n_elec_core(pot::AtomicPotential) = round(Int, charge_nuclear(pot) - charge_ioni
 function energy_correction(T::Type{<:Real}, pot::AtomicPotential, args...; kwargs...)
     return energy_correction(T, pot.local_potential, args...; kwargs...)
 end
+function count_n_proj_radial(pot::AtomicPotential, args...)
+    return count_n_proj_raidal(pot.nonlocal_potential, args...)
+end
 count_n_proj(pot::AtomicPotential, args...) = count_n_proj(pot.nonlocal_potential, args...)
 function count_n_proj(pots::AbstractVector{<:AtomicPotential}, positions::AbstractVector)
     return dot(count_n_proj.(pots), length.(positions))
