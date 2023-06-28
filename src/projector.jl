@@ -34,18 +34,18 @@ function hgh_projector_polynomial(
     # Note: In the (l == 0 && i == 2) case the HGH paper has an error.
     #       The first 8 in equation (8) should not be under the sqrt-sign
     #       This is the right version (as shown in the GTH paper)
-    (l == 0 && n == 1) && return common
-    (l == 0 && n == 2) && return common * 2 / sqrt(T(15)) * (3 - x^2)
-    (l == 0 && n == 3) && return common * 4 / 3sqrt(T(105)) * (15 - 10x^2 + x^4)
+    (P.l == 0 && P.n == 1) && return common
+    (P.l == 0 && P.n == 2) && return common * 2 / sqrt(T(15)) * (3 - x^2)
+    (P.l == 0 && P.n == 3) && return common * 4 / 3sqrt(T(105)) * (15 - 10x^2 + x^4)
     #
-    (l == 1 && n == 1) && return common * 1 / sqrt(T(3)) * x
-    (l == 1 && n == 2) && return common * 2 / sqrt(T(105)) * x * (5 - x^2)
-    (l == 1 && n == 3) && return common * 4 / 3sqrt(T(1155)) * x * (35 - 14x^2 + x^4)
+    (P.l == 1 && P.n == 1) && return common * 1 / sqrt(T(3)) * x
+    (P.l == 1 && P.n == 2) && return common * 2 / sqrt(T(105)) * x * (5 - x^2)
+    (P.l == 1 && P.n == 3) && return common * 4 / 3sqrt(T(1155)) * x * (35 - 14x^2 + x^4)
     #
-    (l == 2 && n == 1) && return common * 1 / sqrt(T(15)) * x^2
-    (l == 2 && n == 2) && return common * 2 / 3sqrt(T(105)) * x^2 * (7 - x^2)
+    (P.l == 2 && P.n == 1) && return common * 1 / sqrt(T(15)) * x^2
+    (P.l == 2 && P.n == 2) && return common * 2 / 3sqrt(T(105)) * x^2 * (7 - x^2)
     #
-    (l == 3 && n == 1) && return common * 1 / sqrt(T(105)) * x^3
+    (P.l == 3 && P.n == 1) && return common * 1 / sqrt(T(105)) * x^3
 
     throw(ArgumentError("Not implemented for l=$l and i=$n"))
 end
