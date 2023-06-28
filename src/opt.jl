@@ -170,19 +170,6 @@ for (op!, op, Sin, Sout) in
                                 args...;
                                 kwargs...,
                             ) where {T<:Real}
-                                # ::AtomicPotential{
-                                #     $(Sout),
-                                #     LocalPotential{$(Sout),Numerical},
-                                #     NonLocalPotential{
-                                #         $(Sout),
-                                #         Numerical,
-                                #         KleinmanBylanderProjector{$(Sout),Numerical},
-                                #     },
-                                #     $(VDout),
-                                #     $(CDout),
-                                #     $(SPout),
-                                #     $(AUGout),
-                                # }
                                 n = max_r_length(potential)
                                 weights_ = Vector{Float64}(undef, n)
                                 integrand_ = Vector{T}(undef, n)

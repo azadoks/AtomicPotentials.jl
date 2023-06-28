@@ -1,12 +1,12 @@
 function ht!(
-    weights_::AbstractVector{T},
-    integrand_::AbstractVector{TT},
+    weights_::Vector{T},
+    integrand_::Vector{TT},
     r::AbstractVector{T},
     r²f::AbstractVector{T},
     q::AbstractVector{TT},
     l::Int,
     quadrature_method::NumericalQuadrature.QuadratureMethodOrType,
-)::AbstractVector{TT} where {T<:Real,TT<:Real}
+)::Vector{TT} where {T<:Real,TT<:Real}
     weights_ = @view weights_[eachindex(r)]
     integrand_ = @view integrand_[eachindex(r)]
     NumericalQuadrature.integration_weights!(weights_, r, quadrature_method)
