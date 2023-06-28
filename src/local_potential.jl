@@ -1,4 +1,5 @@
 abstract type AbstractLocalPotential{S,A} <: AbstractAtomicQuantity{S,A} end
+
 angular_momentum(quantity::AbstractLocalPotential)::Int = 0
 
 ## Numerical local potential
@@ -8,43 +9,15 @@ struct LocalPotential{S,Numerical} <: AbstractLocalPotential{S,Numerical}
     interpolator  # Vloc(r) in real-space; Vloc(q) in Fourier-Space
     Z
 end
+
 function (Vloc::LocalPotential{FourierSpace})(q::T)::T where {T}
     !iszero(q) && return Vloc.interpolator(q)  # Compensating charge background
     return zero(T)
 end
+
 function (Vloc::LocalPotential{RealSpace})(r::T)::T where {T}
     !iszero(r) && return Vloc.interpolator(r)  # Divergence at r=0
     return T(-Inf)
-end
-function ht(
-    Vloc::LocalPotential{RealSpace},
-    q::AbstractVector,
-    quadrature_method::NumericalQuadrature.QuadratureMethodOrType=NumericalQuadrature.Simpson,
-    interpolation_method::Interpolation.InterpolationMethod=Interpolation.Spline(4),
-)::LocalPotential{FourierSpace}
-    r²f = Vloc.r .* (Vloc.r .* Vloc.f .- -Vloc.Z)  # == r² (Vloc - -Z/r)
-    F =
-        ht(Vloc.r, r²f, q, angular_momentum(Vloc), quadrature_method) .+
-        4π .* (-Vloc.Z ./ q .^ 2)
-    interpolator = Interpolation.construct_interpolator(
-        q[(begin + 1):end], F[(begin + 1):end], interpolation_method
-    )
-    return _construct_dual_quantity(Vloc; r=q, f=F, interpolator=interpolator)
-end
-function iht(
-    Vloc::LocalPotential{FourierSpace},
-    r::AbstractVector,
-    quadrature_method::NumericalQuadrature.QuadratureMethodOrType=NumericalQuadrature.Simpson,
-    interpolation_method::Interpolation.InterpolationMethod=Interpolation.Spline(4),
-)::LocalPotential{RealSpace}
-    q²F = Vloc.r .^ 2 .* Vloc.f .- -Vloc.Z  # == q² (Vloc - -Z/q²)
-    f =
-        ht(Vloc.r, q²F, r, angular_momentum(Vloc), quadrature_method) .+
-        4π / (2π)^3 .* (-Vloc.Z ./ r)
-    interpolator = Interpolation.construct_interpolator(
-        r[(begin + 1):end], f[(begin + 1):end], interpolation_method
-    )
-    return _construct_dual_quantity(Vloc; r=r, f=f, interpolator=interpolator)
 end
 
 ## HGH local potential
@@ -53,6 +26,7 @@ struct HghLocalPotential{S,Analytical} <: AbstractLocalPotential{S,Analytical}
     c
     Z
 end
+
 # [GTH98] (1)
 function (Vloc::HghLocalPotential{RealSpace})(r::T)::T where {T<:Real}
     r += iszer(r) ? eps(T) : zero(T)  # quick hack for the division by zero below
@@ -61,11 +35,13 @@ function (Vloc::HghLocalPotential{RealSpace})(r::T)::T where {T<:Real}
     return -Vloc.z / r * erf(rr / sqrt(T(2))) +
            exp(-rr^2 / 2) * (c[1] + c[2] * rr^2 + c[3] * rr^4 + c[4] * rr^6)
 end
+
 # [GTH98] (6) except they do it with plane waves normalized by 1/sqrt(Ω).
 function (Vloc::HghLocalPotential{FourierSpace})(q::T)::T where {T<:Real}
     x::T = q * Vloc.r
     return _hgh_local_potential_polynomial_fourier(Vloc, x) * exp(-x^2 / 2) / x^2
 end
+
 # The local potential of a HGH pseudopotentials in reciprocal space
 # can be brought to the form ``Q(t) / (t^2 exp(t^2 / 2))``
 # where ``x = r_\text{loc} q`` and `Q`
@@ -108,9 +84,11 @@ end
 struct CoulombErfLocalPotential{S,Analytical} <: AbstractLocalPotential{S,Analytical}
     Z
 end
+
 function (Vloc::CoulombErfLocalPotential{RealSpace})(r)
     return -Vloc.Z / r * erf(r)
 end
+
 function (Vloc::CoulombErfLocalPotential{FourierSpace})(q::T) where {T}
     iszero(q) && return zero(T)  # Compensating charge background
     # General atom => Use default Coulomb potential
@@ -123,9 +101,11 @@ struct GaussianLocalPotential{S,Analytical} <: AbstractLocalPotential{S,Analytic
     α
     L
 end
+
 function (Vloc::GaussianLocalPotential{RealSpace})(r::T)::T where {T}
     return -Vloc.α / (sqrt(2T(π)) * Vloc.L) * exp(-(r / Vloc.L)^2 / 2)
 end
+
 function (Vloc::GaussianLocalPotential{FourierSpace})(q::T)::T where {T}
     iszero(q) && return zero(T)  # Compensating charge background
     # = ∫_ℝ³ V(x) exp(-ix⋅q) dx
@@ -138,6 +118,7 @@ struct CohenBergstresserLocalPotential{FourierSpace,Analytical} <:
     V_sym  # Map |G|^2 (in units of (2π / lattice_constant)^2) to form factors
     lattice_constant  # Lattice constant (in Bohr) which is assumed
 end
+
 function (Vloc::CohenBergstresserLocalPotential{FourierSpace})(q::T)::T where {T}
     iszero(q) && return zero(T)  # Compensating charge background
     # Get |q|^2 in units of (2π / lattice_constant)^2

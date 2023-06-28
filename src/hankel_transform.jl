@@ -1,22 +1,3 @@
-ht(::Nothing, args...; kwargs...) = nothing
-
-# args... are included for interface consistency with numeric `ht`, which requires
-# a q-point mesh and an integration method
-function ht(quantity::AbstractAtomicQuantity{RealSpace,Analytical}, args...)
-    return _construct_dual_quantity(quantity)
-end
-
-function ht(
-    quantity::AbstractAtomicQuantity{RealSpace,Numerical},
-    q::AbstractVector,
-    quadrature_method::NumericalQuadrature.QuadratureMethodOrType=NumericalQuadrature.Simpson,
-    interpolation_method::Interpolation.InterpolationMethod=Interpolation.Spline(4),
-)
-    F = ht(quantity.r, quantity.f, q, angular_momentum(quantity), quadrature_method)
-    interpolator = Interpolation.construct_interpolator(q, F, interpolation_method)
-    return _construct_dual_quantity(quantity; r=q, f=F, interpolator=interpolator)
-end
-
 function ht(
     r::AbstractVector,
     r²f::AbstractVector,
@@ -50,6 +31,41 @@ function ht(
     return ht(r, r²f.(r), q, l, quadrature_method)
 end
 
+ht(::Nothing, args...; kwargs...) = nothing
+
+# args... are included for interface consistency with numeric `ht`, which requires
+# a q-point mesh and an integration method
+function ht(quantity::AbstractAtomicQuantity{RealSpace,Analytical}, args...)
+    return _construct_dual_quantity(quantity)
+end
+
+function ht(
+    quantity::AbstractAtomicQuantity{RealSpace,Numerical},
+    q::AbstractVector,
+    quadrature_method::NumericalQuadrature.QuadratureMethodOrType=NumericalQuadrature.Simpson,
+    interpolation_method::Interpolation.InterpolationMethod=Interpolation.Spline(4),
+)
+    F = ht(quantity.r, quantity.f, q, angular_momentum(quantity), quadrature_method)
+    interpolator = Interpolation.construct_interpolator(q, F, interpolation_method)
+    return _construct_dual_quantity(quantity; r=q, f=F, interpolator=interpolator)
+end
+
+function ht(
+    Vloc::LocalPotential{RealSpace},
+    q::AbstractVector,
+    quadrature_method::NumericalQuadrature.QuadratureMethodOrType=NumericalQuadrature.Simpson,
+    interpolation_method::Interpolation.InterpolationMethod=Interpolation.Spline(4),
+)::LocalPotential{FourierSpace}
+    r²f = Vloc.r .* (Vloc.r .* Vloc.f .- -Vloc.Z)  # == r² (Vloc - -Z/r)
+    F =
+        ht(Vloc.r, r²f, q, angular_momentum(Vloc), quadrature_method) .+
+        4π .* (-Vloc.Z ./ q .^ 2)
+    interpolator = Interpolation.construct_interpolator(
+        q[(begin + 1):end], F[(begin + 1):end], interpolation_method
+    )
+    return _construct_dual_quantity(Vloc; r=q, f=F, interpolator=interpolator)
+end
+
 function ht(
     x::Union{
         NonLocalPotential{RealSpace},Augmentation{RealSpace},AtomicPotential{RealSpace}
@@ -64,14 +80,6 @@ function ht(
     ::AugmentationFunction{RealSpace,Numerical}, q::AbstractVector, args...; kwargs...
 )
     return error("`ht` not implemented for `AugmentationFunction`")
-end
-
-iht(::Nothing, args...; kwargs...) = nothing
-
-# args... are included for interface consistency with numeric `iht`, which requires
-# an r-point mesh and an integration method
-function iht(quantity::AbstractAtomicQuantity{FourierSpace,Analytical}, args...)
-    return _construct_dual_quantity(quantity)
 end
 
 function iht(
@@ -101,6 +109,14 @@ function iht(
     return f
 end
 
+iht(::Nothing, args...; kwargs...) = nothing
+
+# args... are included for interface consistency with numeric `iht`, which requires
+# an r-point mesh and an integration method
+function iht(quantity::AbstractAtomicQuantity{FourierSpace,Analytical}, args...)
+    return _construct_dual_quantity(quantity)
+end
+
 function iht(
     q::AbstractVector,
     F,
@@ -109,6 +125,22 @@ function iht(
     quadrature_method::NumericalQuadrature.QuadratureMethodOrType,
 )
     return iht(q, F.(q), r, l, quadrature_method)
+end
+
+function iht(
+    Vloc::LocalPotential{FourierSpace},
+    r::AbstractVector,
+    quadrature_method::NumericalQuadrature.QuadratureMethodOrType=NumericalQuadrature.Simpson,
+    interpolation_method::Interpolation.InterpolationMethod=Interpolation.Spline(4),
+)::LocalPotential{RealSpace}
+    q²F = Vloc.r .^ 2 .* Vloc.f .- -Vloc.Z  # == q² (Vloc - -Z/q²)
+    f =
+        ht(Vloc.r, q²F, r, angular_momentum(Vloc), quadrature_method) .+
+        4π / (2π)^3 .* (-Vloc.Z ./ r)
+    interpolator = Interpolation.construct_interpolator(
+        r[(begin + 1):end], f[(begin + 1):end], interpolation_method
+    )
+    return _construct_dual_quantity(Vloc; r=r, f=f, interpolator=interpolator)
 end
 
 function iht(
