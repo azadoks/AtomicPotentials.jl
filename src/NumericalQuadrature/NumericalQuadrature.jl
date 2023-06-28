@@ -20,6 +20,8 @@ struct NonUniform <: Uniformity end
 
 abstract type QuadratureMethod end
 
+Base.Broadcast.broadcastable(m::QuadratureMethod) = Ref(m)
+
 QuadratureMethodOrType = Union{QuadratureMethod,Type{<:QuadratureMethod}}
 
 function integration_weights!(

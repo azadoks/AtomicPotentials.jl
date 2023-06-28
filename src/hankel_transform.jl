@@ -52,11 +52,11 @@ function ht(
 end
 
 function ht(
-    Vloc::LocalPotential{RealSpace},
+    Vloc::LocalPotential{RealSpace,Numerical},
     q::AbstractVector,
     quadrature_method::NumericalQuadrature.QuadratureMethodOrType=NumericalQuadrature.Simpson,
     interpolation_method::Interpolation.InterpolationMethod=Interpolation.Spline(4),
-)::LocalPotential{FourierSpace}
+)::LocalPotential{FourierSpace,Numerical}
     r²f = Vloc.r .* (Vloc.r .* Vloc.f .- -Vloc.Z)  # == r² (Vloc - -Z/r)
     F =
         ht(Vloc.r, r²f, q, angular_momentum(Vloc), quadrature_method) .+
@@ -64,7 +64,7 @@ function ht(
     interpolator = Interpolation.construct_interpolator(
         q[(begin + 1):end], F[(begin + 1):end], interpolation_method
     )
-    return _construct_dual_quantity(Vloc; r=q, f=F, interpolator=interpolator)
+    return LocalPotential{FourierSpace,Numerical}(q, F, interpolator, Vloc.Z)
 end
 
 function iht(
