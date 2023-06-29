@@ -10,8 +10,10 @@ function ht!(
     weights_ = @view weights_[eachindex(r)]
     integrand_ = @view integrand_[eachindex(r)]
     NumericalQuadrature.integration_weights!(weights_, r, quadrature_method)
+    jl = fast_sphericalbesselj(l)
     F = map(q) do qi
-        integrand_ .= r²f .* fast_sphericalbesselj.(l, qi .* r)
+        # integrand_ .= r²f .* fast_sphericalbesselj.(l, qi .* r)
+        integrand_ .= r²f .* jl.(qi .* r)
         return 4π * dot(weights_, integrand_)
     end
     return F
