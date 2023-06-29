@@ -1,9 +1,6 @@
 abstract type AbstractLocalPotential{S,A} <: AbstractAtomicQuantity{S,A} end
-
-angular_momentum(Vloc::AbstractLocalPotential)::Int = 0
-
+angular_momentum(Vloc::AbstractLocalPotential) = 0
 charge_ionic(Vloc::AbstractLocalPotential) = Vloc.Z
-
 energy_correction(T::Type{<:Real}, ::AbstractLocalPotential) = zero(T)
 
 ## Numerical local potential
@@ -11,7 +8,7 @@ struct LocalPotential{S,Numerical} <: AbstractLocalPotential{S,Numerical}
     r::AbstractVector
     f::AbstractVector  # Vloc(r) in real-space; Vloc(q) in Fourier-space
     interpolator::BSplineKit.SplineWrapper  # Vloc(r) in real-space; Vloc(q) in Fourier-Space
-    Z
+    Z::Real
 end
 
 function (Vloc::LocalPotential{FourierSpace})(q::T)::T where {T}
@@ -83,9 +80,11 @@ end
 struct CoulombLocalPotential{S,Analytical} <: AbstractLocalPotential{S,Analytical}
     Z
 end
+
 function (Vloc::CoulombLocalPotential{RealSpace})(r::T)::T where {T<:Real}
     return -Vloc.Z / r
 end
+
 function (Vloc::CoulombLocalPotential{FourierSpace})(q::T) where {T}
     iszero(q) && return zero(T)  # Compensating charge background
     # General atom => Use default Coulomb potential
@@ -116,7 +115,6 @@ struct GaussianLocalPotential{S,Analytical} <: AbstractLocalPotential{S,Analytic
     α
     L
 end
-
 charge_ionic(Vloc::GaussianLocalPotential) = 0
 
 function (Vloc::GaussianLocalPotential{RealSpace})(r::T)::T where {T}
@@ -135,7 +133,6 @@ struct CohenBergstresserLocalPotential{FourierSpace,Analytical} <:
     V_sym  # Map |G|^2 (in units of (2π / lattice_constant)^2) to form factors
     lattice_constant  # Lattice constant (in Bohr) which is assumed
 end
-
 charge_ionic(Vloc::CohenBergstresserLocalPotential) = 4
 
 function (Vloc::CohenBergstresserLocalPotential{FourierSpace})(q::T)::T where {T}

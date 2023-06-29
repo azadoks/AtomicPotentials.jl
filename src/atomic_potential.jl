@@ -52,21 +52,21 @@ function Base.show(io::IO, ::MIME"text/plain", pot::AtomicPotential)
     @printf io "%032s: %s\n" "augmentation" pot.augmentation
 end
 
-function _apply(potential::AtomicPotential, f::Function, args...; kwargs...)
-    states = map(potential.states) do states_l
+function _apply(pot::AtomicPotential, f::Function, args...; kwargs...)
+    states = map(pot.states) do states_l
         map(states_l) do state_ln
             return f(state_ln, args...; kwargs...)
         end
     end
     return AtomicPotential(
-        potential.identifier,
-        potential.symbol,
-        f(potential.local_potential, args...; kwargs...),
-        f(potential.nonlocal_potential, args...; kwargs...),
-        f(potential.valence_density, args...; kwargs...),
-        f(potential.core_density, args...; kwargs...),
+        pot.identifier,
+        pot.symbol,
+        f(pot.local_potential, args...; kwargs...),
+        f(pot.nonlocal_potential, args...; kwargs...),
+        f(pot.valence_density, args...; kwargs...),
+        f(pot.core_density, args...; kwargs...),
         states,
-        f(potential.augmentation, args...; kwargs...),
+        f(pot.augmentation, args...; kwargs...),
     )
 end
 
@@ -103,10 +103,10 @@ end
 max_r_length(::Nothing) = 0
 max_r_length(::AbstractAtomicQuantity{S,Analytical}) where {S} = 0
 max_r_length(x::AbstractAtomicQuantity{S,Numerical}) where {S} = length(x.r)
-function max_r_length(x::NonLocalPotential{S,Numerical}) where {S}
-    return maximum(βl -> maximum(max_r_length, βl; init=0), x.β; init=0)
+function max_r_length(Vnl::NonLocalPotential{S,Numerical}) where {S}
+    return maximum(βl -> maximum(max_r_length, βl; init=0), Vnl.β; init=0)
 end
-function max_r_length(x::Augmentation)
-    return maximum(Ql -> maximum(max_r_length, Ql; init=0), x.Q; init=0)
+function max_r_length(aug::Augmentation)
+    return maximum(Ql -> maximum(max_r_length, Ql; init=0), aug.Q; init=0)
 end
 max_r_length(x::AbstractVector) = maximum(max_r_length, x; init=0)

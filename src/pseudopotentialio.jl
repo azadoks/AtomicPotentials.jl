@@ -18,14 +18,8 @@ function AtomicPotential(
         l = i - 1
         map(enumerate(proj_l)) do (n, proj)
             f = r .* proj
-            KleinmanBylanderProjector{RealSpace,Numerical}(
-                r,
-                f,
-                Interpolation.construct_interpolator(r, f, interpolation_method),
-                n,
-                l,
-                j,
-            )
+            interpolator = Interpolation.construct_interpolator(r, f, interpolation_method)
+            KleinmanBylanderProjector{RealSpace,Numerical}(r, f, interpolator, n, l, j)
         end
     end
     β = OffsetVector(β, 0:lmax)
