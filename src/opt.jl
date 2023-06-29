@@ -2,7 +2,7 @@ import .NumericalQuadrature: QuadratureMethodOrType, Simpson
 import .Interpolation: InterpolationMethod, Spline, construct_interpolator
 
 for (AQ, args) in (
-    (:KleinmanBylanderProjector, (:l, :j)),
+    (:KleinmanBylanderProjector, (:n, :l, :j)),
     (:ChargeDensity, ()),
     (:AugmentationFunction, (:n, :m, :l)),
     (:StateProjector, (:n, :l, :j)),
