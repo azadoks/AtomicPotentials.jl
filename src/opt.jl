@@ -1,4 +1,4 @@
-import .NumericalQuadrature: QuadratureMethodOrType, Simpson
+import .NumericalQuadrature: QuadratureMethod, Trapezoid
 import .Interpolation: InterpolationMethod, Spline, construct_interpolator
 
 for (AQ, args) in (
@@ -14,7 +14,7 @@ for (AQ, args) in (
                 integrand_::AbstractVector{T},
                 quantity::$(AQ){RealSpace,Numerical},
                 q::AbstractVector{T},
-                quadrature_method::QuadratureMethodOrType=Simpson,
+                quadrature_method::QuadratureMethod=Trapezoid(),
                 interpolation_method::InterpolationMethod=Spline(4),
             ) where {T<:Real}
                 r = quantity.r
@@ -30,7 +30,7 @@ for (AQ, args) in (
                 integrand_::AbstractVector{T},
                 quantity::$(AQ){FourierSpace,Numerical},
                 r::AbstractVector{T},
-                quadrature_method::QuadratureMethodOrType=Simpson,
+                quadrature_method::QuadratureMethod=Trapezoid(),
                 interpolation_method::InterpolationMethod=Spline(4),
             ) where {T<:Real}
                 q = quantity.r

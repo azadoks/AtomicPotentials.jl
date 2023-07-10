@@ -19,9 +19,7 @@ function interpolate_onto(quantity::AbstractAtomicQuantity{S,Numerical}, Δr::Re
 end
 
 function interpolate_onto(
-    x::Union{NonLocalPotential{S,Numerical},Augmentation{S,Numerical},AtomicPotential},
-    args...;
-    kwargs...,
+    x::Union{NonLocalPotential{S,Numerical},Augmentation{S,Numerical},AtomicPotential}, r
 ) where {S}
-    return _apply(x, interpolate_onto, args...; kwargs...)
+    return _apply(x, interpolate_onto, r)
 end

@@ -1,3 +1,5 @@
+import .NumericalQuadrature: QuadratureMethod, Simpson, integration_weights
+
 abstract type AbstractLocalPotential{S,A} <: AbstractAtomicQuantity{S,A} end
 angular_momentum(Vloc::AbstractLocalPotential) = 0
 charge_ionic(Vloc::AbstractLocalPotential) = Vloc.Z
@@ -24,10 +26,10 @@ end
 function energy_correction(
     T::Type{<:Real},
     Vloc::LocalPotential{RealSpace},
-    quadrature_method::NumericalQuadrature.QuadratureMethodOrType=NumericalQuadrature.Simpson,
+    quadrature_method::QuadratureMethod=Simpson(),
 )
     integrand = Vloc.r .* (Vloc.r .* Vloc.f .- -Vloc.Z)
-    weights = NumericalQuadrature.integration_weights(Vloc.r, quadrature_method)
+    weights = integration_weights(Vloc.r, quadrature_method)
     return 4T(π) * dot(weights, integrand)
 end
 
@@ -43,7 +45,7 @@ function (Vloc::HghLocalPotential{RealSpace})(r::T)::T where {T<:Real}
     r += iszero(r) ? eps(T) : zero(T)  # quick hack for the division by zero below
     rr::T = r / Vloc.r
     c = Vloc.c
-    return -Vloc.z / r * erf(rr / sqrt(T(2))) +
+    return -Vloc.Z / r * erf(rr / sqrt(T(2))) +
            exp(-rr^2 / 2) * (c[1] + c[2] * rr^2 + c[3] * rr^4 + c[4] * rr^6)
 end
 

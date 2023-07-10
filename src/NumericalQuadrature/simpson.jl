@@ -57,15 +57,20 @@ the function is generally close to zero in the last interval and the error made 
 the Trapezoid rule w.r.t. Simpson's rule has a smaller effect on the value of the integral.
 This approach is also equivalent to the approach taken in the non-uniform case.
 """
-struct Simpson{U<:Uniformity} <: QuadratureMethod end
+struct Simpson <: QuadratureMethod end
 
-function integration_weights!(
-    weights::AbstractVector, x::AbstractVector, ::Simpson{Uniform}
-)
+function integration_weights!(weights::AbstractVector, x::AbstractVector, ::Simpson)
     length(weights) == length(x) ||
         throw(DimensionMismatch("weights and x arrays must have a common length"))
     length(x) >= 4 || throw(ArgumentError("x must have a length of at least 4"))
+    if is_uniform(x)
+        return simpson_weights_uniform!(weights, x)
+    else
+        return simpson_weights_nonuniform!(weights, x)
+    end
+end
 
+function simpson_weights_uniform!(weights::AbstractVector, x::AbstractVector)
     Δx = x[begin + 1] - x[begin]
     N = length(weights) - 1  # Number of intervals
     #! format: off
@@ -107,23 +112,16 @@ function integration_weights!(
     return weights
 end
 
-function integration_weights!(
-    weights::AbstractVector, x::AbstractVector, ::Simpson{NonUniform}
-)
-    length(weights) == length(x) ||
-        throw(DimensionMismatch("weights and x arrays must have a common length"))
-    length(x) >= 4 || throw(ArgumentError("x must have a length of at least 4"))
-
+function simpson_weights_nonuniform!(weights::AbstractVector, x::AbstractVector)
     N = length(weights) - 1  # Number of intervals
     fill!(weights, 0)
 
     # Skip the last interval if the number of intervals is odd
     istop = isodd(N) ? lastindex(weights) - 3 : lastindex(weights) - 2
 
-    Δx_1 = x[begin + 1] - x[begin]
     #! format: off
     for i in firstindex(weights):2:istop
-        Δx_0 = Δx_1  # x[i + 1] - x[i]
+        Δx_0 = x[i + 1] - x[i]
         Δx_1 = x[i + 2] - x[i + 1]
         prefac = (Δx_0 + Δx_1) / 6
         weights[i    ] += prefac * (2 - Δx_1 / Δx_0)

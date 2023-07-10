@@ -14,15 +14,20 @@ Uniform grid
 \Delta x \left( \sum_{i=1}^{N-1} f(x_i) + \frac{f(x_N) + f(x_0)}{2} \right)
 ```
 """
-struct Trapezoid{U<:Uniformity} <: QuadratureMethod end
+struct Trapezoid <: QuadratureMethod end
 
-function integration_weights!(
-    weights::AbstractVector, x::AbstractVector, ::Trapezoid{Uniform}
-)
+function integration_weights!(weights::AbstractVector, x::AbstractVector, ::Trapezoid)
     length(weights) == length(x) ||
         throw(DimensionMismatch("weights and x arrays must have a common length"))
     length(x) >= 2 || throw(ArgumentError("x must have a length of at least 2"))
+    if is_uniform(x)
+        return trapezoid_weights_uniform!(weights, x)
+    else
+        return trapezoid_weights_nonuniform!(weights, x)
+    end
+end
 
+function trapezoid_weights_uniform!(weights::AbstractVector, x::AbstractVector)
     Δx = x[begin + 1] - x[begin]
 
     weights[begin] = Δx / 2
@@ -32,13 +37,7 @@ function integration_weights!(
     return weights
 end
 
-function integration_weights!(
-    weights::AbstractVector, x::AbstractVector, ::Trapezoid{NonUniform}
-)
-    length(weights) == length(x) ||
-        throw(DimensionMismatch("weights and x arrays must have a common length"))
-    length(x) >= 2 || throw(ArgumentError("x must have a length of at least 2"))
-
+function trapezoid_weights_nonuniform!(weights::AbstractVector, x::AbstractVector)
     weights[begin] = (x[begin + 1] - x[begin]) / 2
     for i in (firstindex(weights) + 1):(lastindex(weights) - 1)
         # Δx[i] + Δx[i-1] = (x[i+1] - x[i]) + (x[i] - x[i-1]) = x[i+i] - x[i-1]

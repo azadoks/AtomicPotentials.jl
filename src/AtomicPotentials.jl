@@ -103,8 +103,8 @@ include("opt.jl")
 @setup_workload begin
     psp_files = []
     for psp_file_tuple in [
-        ("pd_nc_sr_pbe_standard_0.4.1_psp8", "Si.psp8"),
-        ("pd_nc_sr_pbe_standard_0.4.1_upf", "Si.upf"),
+        ("pd_nc_sr_pbe_standard_0.4.1_psp8", "B.psp8"),
+        ("pd_nc_sr_pbe_standard_0.4.1_upf", "B.upf"),
         ("hgh_lda_hgh", "si-q4.hgh"),
     ]
         push!(psp_files, PseudoPotentialIO.load_psp_file(psp_file_tuple...))

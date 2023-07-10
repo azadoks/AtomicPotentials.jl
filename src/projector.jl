@@ -27,27 +27,27 @@ struct HghKleinmanBylanderProjector{S,Analytical} <:
     l::Int
 end
 function hgh_projector_polynomial(
-    P::HghKleinmanBylanderProjector{FourierSpace}, x::T
+    P::HghKleinmanBylanderProjector{FourierSpace}, t::T
 ) where {T<:Real}
-    common::T = 4T(π)^(5 / T(4)) * sqrt(T(2^(P.l + 1)) * P.r^3)
+    c::T = 4T(π)^(5 / T(4)) * sqrt(T(2^(P.l + 1)) * P.r^3)
 
     # Note: In the (l == 0 && i == 2) case the HGH paper has an error.
     #       The first 8 in equation (8) should not be under the sqrt-sign
     #       This is the right version (as shown in the GTH paper)
-    (P.l == 0 && P.n == 1) && return common
-    (P.l == 0 && P.n == 2) && return common * 2 / sqrt(T(15)) * (3 - x^2)
-    (P.l == 0 && P.n == 3) && return common * 4 / 3sqrt(T(105)) * (15 - 10x^2 + x^4)
+    (P.l == 0 && P.n == 1) && return convert(T, c)
+    (P.l == 0 && P.n == 2) && return c * 2 / sqrt(T(15)) * (3 - t^2)
+    (P.l == 0 && P.n == 3) && return c * 4 / 3sqrt(T(105)) * (15 - 10t^2 + t^4)
     #
-    (P.l == 1 && P.n == 1) && return common * 1 / sqrt(T(3)) * x
-    (P.l == 1 && P.n == 2) && return common * 2 / sqrt(T(105)) * x * (5 - x^2)
-    (P.l == 1 && P.n == 3) && return common * 4 / 3sqrt(T(1155)) * x * (35 - 14x^2 + x^4)
+    (P.l == 1 && P.n == 1) && return c * 1 / sqrt(T(3)) * t
+    (P.l == 1 && P.n == 2) && return c * 2 / sqrt(T(105)) * t * (5 - t^2)
+    (P.l == 1 && P.n == 3) && return c * 4 / 3sqrt(T(1155)) * t * (35 - 14t^2 + t^4)
     #
-    (P.l == 2 && P.n == 1) && return common * 1 / sqrt(T(15)) * x^2
-    (P.l == 2 && P.n == 2) && return common * 2 / 3sqrt(T(105)) * x^2 * (7 - x^2)
+    (P.l == 2 && P.n == 1) && return c * 1 / sqrt(T(15)) * t^2
+    (P.l == 2 && P.n == 2) && return c * 2 / 3sqrt(T(105)) * t^2 * (7 - t^2)
     #
-    (P.l == 3 && P.n == 1) && return common * 1 / sqrt(T(105)) * x^3
+    (P.l == 3 && P.n == 1) && return c * 1 / sqrt(T(105)) * t^3
 
-    throw(ArgumentError("Not implemented for l=$l and i=$n"))
+    throw(ArgumentError("Not implemented for l=$l and n=$n"))
 end
 function (P::HghKleinmanBylanderProjector{RealSpace})(r::T)::T where {T<:Real}
     ired::T = (4 * P.n - 1) / T(2)
@@ -56,7 +56,7 @@ function (P::HghKleinmanBylanderProjector{RealSpace})(r::T)::T where {T<:Real}
 end
 function (P::HghKleinmanBylanderProjector{FourierSpace})(q::T) where {T<:Real}
     x::T = q * P.r
-    return hgh_projector_polynomial(P, q) * exp(-x^2 / T(2))
+    return hgh_projector_polynomial(P, x) * exp(-x^2 / T(2))
 end
 
 ### State projectors

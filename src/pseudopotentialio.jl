@@ -318,9 +318,13 @@ function AtomicPotential(hgh_file::PseudoPotentialIO.HghFile)
             return HghKleinmanBylanderProjector{RealSpace,Analytical}(hgh_file.rp[l + 1], n, l)
         end
     end
-    β = OffsetVector(β, 0:lmax)
-    D = OffsetVector(hgh_file.h, 0:lmax)
-    Vnl = NonLocalPotential{RealSpace,Analytical,eltype(eltype(β))}(β, D)
+    β = OffsetVector(β, 0:lmax)  # Ha / √a₀
+    D = OffsetVector(hgh_file.h, 0:lmax)  # 1 / Ha
+    Vnl = NonLocalPotential{
+        RealSpace,Analytical,HghKleinmanBylanderProjector{RealSpace,Analytical}
+    }(
+        β, D
+    )
 
     ρval = nothing
     ρcore = nothing

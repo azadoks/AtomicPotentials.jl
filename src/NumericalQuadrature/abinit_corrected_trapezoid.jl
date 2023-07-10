@@ -43,77 +43,80 @@ meshes!
 \end{cases}
 ```
 """
-struct AbinitCorrectedTrapezoid{Uniform} <: QuadratureMethod end
-AbinitCorrectedTrapezoid() = AbinitCorrectedTrapezoid{Uniform}()
+struct AbinitCorrectedTrapezoid <: QuadratureMethod end
 
-function integration_weights!(weights::AbstractVector, Δx::Real, ::AbinitCorrectedTrapezoid)
+function integration_weights!(
+    weights::AbstractVector, x::AbstractVector, ::AbinitCorrectedTrapezoid
+)
+    is_uniform(x) || error("AbinitCorrectedTrapezoid does not support nonuniform meshes")
+    Δx = x[begin + 1] - x[begin]
     #! format: off
     if length(weights) >= 10
-        weights[begin] = 23.75 / 72 * Δx
+        weights[begin    ] = 23.75 / 72 * Δx
         weights[begin + 1] = 95.10 / 72 * Δx
         weights[begin + 2] = 55.20 / 72 * Δx
         weights[begin + 3] = 79.30 / 72 * Δx
         weights[begin + 4] = 70.65 / 72 * Δx
         weights[(begin + 5):(end - 5)] .= Δx
-        weights[end - 4] = 70.65 / 72 * Δx
-        weights[end - 3] = 79.30 / 72 * Δx
-        weights[end - 2] = 55.20 / 72 * Δx
-        weights[end - 1] = 95.10 / 72 * Δx
-        weights[end] = 23.75 / 72 * Δx
+        weights[end   - 4] = 70.65 / 72 * Δx
+        weights[end   - 3] = 79.30 / 72 * Δx
+        weights[end   - 2] = 55.20 / 72 * Δx
+        weights[end   - 1] = 95.10 / 72 * Δx
+        weights[end      ] = 23.75 / 72 * Δx
     elseif length(weights) == 9
-        weights[begin] = 17 / 48 * Δx
+        weights[begin    ] = 17 / 48 * Δx
         weights[begin + 1] = 59 / 48 * Δx
         weights[begin + 2] = 43 / 48 * Δx
         weights[begin + 3] = 49 / 48 * Δx
         weights[begin + 4] = Δx
-        weights[end - 3] = 49 / 48 * Δx
-        weights[end - 2] = 43 / 48 * Δx
-        weights[end - 1] = 59 / 48 * Δx
-        weights[end] = 17 / 48 * Δx
+        weights[end   - 3] = 49 / 48 * Δx
+        weights[end   - 2] = 43 / 48 * Δx
+        weights[end   - 1] = 59 / 48 * Δx
+        weights[end      ] = 17 / 48 * Δx
     elseif length(weights) == 8
-        weights[begin] = 17 / 48 * Δx
+        weights[begin    ] = 17 / 48 * Δx
         weights[begin + 1] = 59 / 48 * Δx
         weights[begin + 2] = 43 / 48 * Δx
         weights[begin + 3] = 49 / 48 * Δx
-        weights[end - 3] = 49 / 48 * Δx
-        weights[end - 2] = 43 / 48 * Δx
-        weights[end - 1] = 59 / 48 * Δx
-        weights[end] = 17 / 48 * Δx
+        weights[end   - 3] = 49 / 48 * Δx
+        weights[end   - 2] = 43 / 48 * Δx
+        weights[end   - 1] = 59 / 48 * Δx
+        weights[end      ] = 17 / 48 * Δx
     elseif length(weights) == 7
-        weights[begin] = 17 / 48 * Δx
+        weights[begin    ] = 17 / 48 * Δx
         weights[begin + 1] = 59 / 48 * Δx
         weights[begin + 2] = 43 / 48 * Δx
         weights[begin + 3] = 50 / 48 * Δx
-        weights[end - 2] = 43 / 48 * Δx
-        weights[end - 1] = 59 / 48 * Δx
-        weights[end] = 17 / 48 * Δx
+        weights[end   - 2] = 43 / 48 * Δx
+        weights[end   - 1] = 59 / 48 * Δx
+        weights[end      ] = 17 / 48 * Δx
     elseif length(weights) == 6
-        weights[begin] = 17 / 48 * Δx
+        weights[begin    ] = 17 / 48 * Δx
         weights[begin + 1] = 59 / 48 * Δx
         weights[begin + 2] = 44 / 48 * Δx
-        weights[end - 2] = 44 / 48 * Δx
-        weights[end - 1] = 59 / 48 * Δx
-        weights[end] = 17 / 48 * Δx
+        weights[end   - 2] = 44 / 48 * Δx
+        weights[end   - 1] = 59 / 48 * Δx
+        weights[end      ] = 17 / 48 * Δx
     elseif length(weights) == 5
-        weights[begin] = 1 / 3 * Δx
+        weights[begin    ] = 1 / 3 * Δx
         weights[begin + 1] = 4 / 3 * Δx
         weights[begin + 2] = 2 / 3 * Δx
-        weights[end - 1] = 4 / 3 * Δx
-        weights[end] = 1 / 3 * Δx
+        weights[end   - 1] = 4 / 3 * Δx
+        weights[end      ] = 1 / 3 * Δx
     elseif length(weights) == 4
-        weights[begin] = 3 / 8 * Δx
+        weights[begin    ] = 3 / 8 * Δx
         weights[begin + 1] = 9 / 8 * Δx
-        weights[end - 1] = 9 / 8 * Δx
-        weights[end] = 3 / 8 * Δx
+        weights[end   - 1] = 9 / 8 * Δx
+        weights[end      ] = 3 / 8 * Δx
     elseif length(weights) == 3
-        weights[begin] = 1 / 3 * Δx
+        weights[begin    ] = 1 / 3 * Δx
         weights[begin + 1] = 8 / 3 * Δx
-        weights[end] = 1 / 3 * Δx
+        weights[end      ] = 1 / 3 * Δx
     elseif length(weights) == 2
-        weights[begin] = 1 / 2 * Δx
-        weights[end] = 1 / 2 * Δx
+        weights[begin    ] = 1 / 2 * Δx
+        weights[end      ] = 1 / 2 * Δx
     elseif length(weights) == 1
-        weights[begin] = Δx
+        weights[begin    ] = Δx
     end
     #! format: on
     return weights
