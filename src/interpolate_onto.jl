@@ -5,7 +5,9 @@ function interpolate_onto(
 ) where {S}
     f = quantity.interpolator.(r)
     constructor = typeof(quantity)
-    return _construct_similar_quantity(quantity, constructor; r=r, f=f)
+    return _construct_similar_quantity(
+        quantity, constructor; r=r, f=f, interpolator=quantity.interpolator
+    )
 end
 
 function interpolate_onto(quantity::AbstractAtomicQuantity{S,Numerical}, Δr::Real) where {S}
@@ -19,7 +21,7 @@ function interpolate_onto(quantity::AbstractAtomicQuantity{S,Numerical}, Δr::Re
 end
 
 function interpolate_onto(
-    x::Union{NonLocalPotential{S,Numerical},Augmentation{S,Numerical},AtomicPotential}, r
+    x::Union{NonlocalPotential{S,Numerical},Augmentation{S,Numerical},AtomicPotential}, r
 ) where {S}
     return _apply(x, interpolate_onto, r)
 end

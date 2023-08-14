@@ -1,5 +1,6 @@
 module AtomicPotentials
 
+using Adapt
 using BSplineKit
 using LinearAlgebra
 using OffsetArrays
@@ -64,8 +65,8 @@ export AugmentationFunction
 include("augmentation.jl")
 
 ## Non-local potentials
-export NonLocalPotential
-include("non_local_potential.jl")
+export NonlocalPotential
+include("nonlocal_potential.jl")
 
 ## Charge densities
 export AbstractChargeDensity
@@ -96,8 +97,10 @@ export interpolate_onto
 include("interpolate_onto.jl")
 
 ## Truncation
+export truncate
 include("truncate.jl")
 
+## Optimized type-stable routines for numerical types generated via metaprogramming
 include("opt.jl")
 
 @setup_workload begin
@@ -112,8 +115,8 @@ include("opt.jl")
     @compile_workload begin
         for psp_file in psp_files
             pot = AtomicPotential(psp_file)
-            pot_q = ht(pot, 0.0:1.0:10.0)
-            pot′ = iht(pot_q, 0.0:0.1:1.0)
+            pot_q = ht(pot, range(0.0, 10.0, 11))
+            pot_r = iht(pot_q, range(0.0, 6.0, 11))
         end
     end
 end

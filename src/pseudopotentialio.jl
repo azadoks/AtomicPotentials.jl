@@ -24,7 +24,8 @@ function AtomicPotential(
     end
     β = OffsetVector(β, 0:lmax)
     D = OffsetVector(map(l -> diagm(psp8_file.ekb[l + 1]), 0:lmax), 0:lmax)
-    Vnl = NonLocalPotential{RealSpace,Numerical,eltype(eltype(β))}(β, D)
+    aug = nothing
+    Vnl = NonlocalPotential{RealSpace,Numerical,eltype(eltype(β)),typeof(aug)}(β, D, aug)
 
     if isnothing(psp8_file.rhoc)
         ρcore = nothing
@@ -47,9 +48,8 @@ function AtomicPotential(
     end
 
     states = OffsetVector(Vector{Nothing}[], 0:-1)
-    aug = nothing
 
-    return AtomicPotential(identifier, symbol, Vloc, Vnl, ρval, ρcore, states, aug)
+    return AtomicPotential(identifier, symbol, Vloc, Vnl, ρval, ρcore, states)
 end
 
 function _upf_construct_augmentation_q_with_l(
@@ -194,10 +194,10 @@ function AtomicPotential(
             βln_data = upf_file.nonlocal.betas[n].beta
 
             ir_cut = upf_file.nonlocal.betas[n].cutoff_radius_index
-            ir_cut = isnothing(ir_cut) ? length(βln) : ir_cut
+            ir_cut = isnothing(ir_cut) ? length(βln_data) : ir_cut
 
             βln_f = βln_data[1:ir_cut] .* r[1:ir_cut]  # rβln -> r²βln
-            βln_r = r[eachindex(βln_data)]
+            βln_r = r[eachindex(βln_f)]
             βln_interpolator = Interpolation.construct_interpolator(
                 βln_r, βln_f, interpolation_method
             )
@@ -217,8 +217,6 @@ function AtomicPotential(
         )
     end
     D = OffsetVector(D, 0:lmax) ./ 2  # Ry -> Ha
-    Vnl = NonLocalPotential{RealSpace,Numerical,eltype(eltype(β))}(β, D)
-
     if isnothing(upf_file.nonlocal.augmentation)
         aug = nothing
     else
@@ -243,6 +241,7 @@ function AtomicPotential(
         end
         aug = Augmentation{RealSpace,Numerical}(Q, q)
     end
+    Vnl = NonlocalPotential{RealSpace,Numerical,eltype(eltype(β)),typeof(aug)}(β, D, aug)
 
     ## Core charge density
     if isnothing(upf_file.nlcc)
@@ -296,7 +295,7 @@ function AtomicPotential(
         states = OffsetVector(Vector{Nothing}[], 0:-1)
     end
 
-    return AtomicPotential(identifier, symbol, Vloc, Vnl, ρval, ρcore, states, aug)
+    return AtomicPotential(identifier, symbol, Vloc, Vnl, ρval, ρcore, states)
 end
 
 function AtomicPotential(hgh_file::PseudoPotentialIO.HghFile)
@@ -320,16 +319,16 @@ function AtomicPotential(hgh_file::PseudoPotentialIO.HghFile)
     end
     β = OffsetVector(β, 0:lmax)  # Ha / √a₀
     D = OffsetVector(hgh_file.h, 0:lmax)  # 1 / Ha
-    Vnl = NonLocalPotential{
-        RealSpace,Analytical,HghKleinmanBylanderProjector{RealSpace,Analytical}
+    aug = nothing
+    Vnl = NonlocalPotential{
+        RealSpace,Analytical,HghKleinmanBylanderProjector{RealSpace,Analytical},typeof(aug)
     }(
-        β, D
+        β, D, aug
     )
 
     ρval = nothing
     ρcore = nothing
     states = OffsetVector(Vector{Nothing}[], 0:-1)
-    aug = nothing
 
-    return AtomicPotential(hgh_file.identifier, symbol, Vloc, Vnl, ρval, ρcore, states, aug)
+    return AtomicPotential(hgh_file.identifier, symbol, Vloc, Vnl, ρval, ρcore, states)
 end

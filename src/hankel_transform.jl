@@ -214,7 +214,7 @@ for (op, S) in ((:ht, :RealSpace), (:iht, :FourierSpace))
     eval(
         quote
             function $(op)(
-                x::Union{NonLocalPotential{$(S)},Augmentation{$(S)},AtomicPotential{$(S)}},
+                x::Union{NonlocalPotential{$(S)},Augmentation{$(S)},AtomicPotential{$(S)}},
                 args...;
                 kwargs...,
             )

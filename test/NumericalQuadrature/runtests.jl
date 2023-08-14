@@ -37,8 +37,9 @@ import SpecialFunctions: erfi
                             1e-5,
                         ),
                     )
+                        # the QE method is _very_ bad in this case
                         if isa(quadrature_method, QESimpson) && !isodd(n)
-                            atol = 1e-1  # the QE method is _very_ bad in this case
+                            atol = 1e-1
                         end
                         # the ABINIT method doesn't support non-uniform meshes
                         if isa(quadrature_method, AbinitCorrectedTrapezoid) &&

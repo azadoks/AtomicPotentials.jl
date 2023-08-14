@@ -39,12 +39,14 @@ end
 
 _dual_type_of(::Type{Nothing}) = Nothing
 function _dual_type_of(::Type{T}) where {T}
-    S, A = T.parameters
-    return _bare_type_of(T){dual_space_of(S),A}
+    S = first(T.parameters)
+    return _bare_type_of(T){dual_space_of(S),T.parameters[2:end]...}
 end
 _dual_type_of(::Nothing) = Nothing
-function _dual_type_of(quantity::AbstractAtomicQuantity{S,A}) where {S,A}
-    return _bare_type_of(quantity){dual_space_of(S),A}
+function _dual_type_of(quantity::AbstractAtomicQuantity{S}) where {S<:EvaluationSpace}
+    parameters = typeof(quantity).parameters
+    @assert first(parameters) === S
+    return _bare_type_of(quantity){dual_space_of(S),parameters[2:end]...}
 end
 
 function _construct_similar_quantity(

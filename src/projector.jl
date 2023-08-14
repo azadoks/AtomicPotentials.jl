@@ -3,7 +3,7 @@ abstract type AbstractProjector{S,A} <: AbstractAtomicQuantity{S,A} end
 ### KB projectors
 abstract type AbstractKleinmanBylanderProjector{S,A} <: AbstractProjector{S,A} end
 
-## Numerical KB projector
+# Numerical KB projector
 struct KleinmanBylanderProjector{S,Numerical} <:
        AbstractKleinmanBylanderProjector{S,Numerical}
     r::AbstractVector

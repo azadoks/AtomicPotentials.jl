@@ -21,6 +21,11 @@ println("\tRunning tests (TAGS = $(join(TAGS, ", "))).")
     if any(in.(("all", "numerical_quadrature"), TAGSREF))
         include("NumericalQuadrature/runtests.jl")
     end
+
+    if any(in.(("all", "fast_sphericalbesselj"), TAGSREF))
+        include("fast_sphericalbesselj.jl")
+    end
+
     # include("atomic_potential.jl")
     # include("atomic_quantity.jl")
     # include("augmentation.jl")
@@ -29,7 +34,7 @@ println("\tRunning tests (TAGS = $(join(TAGS, ", "))).")
     # include("hankel_transform.jl")
     # include("interpolate_onto.jl")
     # include("local_potential.jl")
-    # include("non_local_potential.jl")
+    # include("nonlocal_potential.jl")
     # include("projector.jl")
     # include("pseudopotentialio.jl")
     # include("truncate.jl")

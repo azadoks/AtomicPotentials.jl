@@ -19,3 +19,4 @@ function _apply(aug::Augmentation, f::Function, args...; kwargs...)
     end
     return Augmentation(Q, aug.q)
 end
+_apply(::Nothing, ::Function, args...; kwargs...) = nothing
