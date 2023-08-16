@@ -1,7 +1,7 @@
 struct QESimpson <: QuadratureMethod end
 
 function integration_weights!(weights::AbstractVector, x::AbstractVector, ::QESimpson)
-    dx = mesh_derivative(x)
+    dx = MeshClassification.gradient(MeshType(x)).(eachindex(x))
     weights .= zero(eltype(weights))
     n = length(x)
     for i in 2:(n - 1)

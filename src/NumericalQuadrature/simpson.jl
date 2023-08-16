@@ -59,19 +59,19 @@ This approach is also equivalent to the approach taken in the non-uniform case.
 """
 struct Simpson <: QuadratureMethod end
 
-function integration_weights!(weights::AbstractVector, x::AbstractVector, ::Simpson)
+function integration_weights!(weights::AbstractVector, x::AbstractVector, method::Simpson)
     length(weights) == length(x) ||
         throw(DimensionMismatch("weights and x arrays must have a common length"))
     length(x) >= 4 || throw(ArgumentError("x must have a length of at least 4"))
-    if is_uniform(x)
-        return simpson_weights_uniform!(weights, x)
+    mesh = Mesh(x)
+    if typeof(mesh) <: Uniform
+        return integration_weights_uniform!(weights, mesh.dx, method)
     else
-        return simpson_weights_nonuniform!(weights, x)
+        return integration_weights_nonuniform!(weights, x, method)
     end
 end
 
-function simpson_weights_uniform!(weights::AbstractVector, x::AbstractVector)
-    Δx = x[begin + 1] - x[begin]
+function integration_weights_uniform!(weights::AbstractVector, Δx::Real, ::Simpson)
     N = length(weights) - 1  # Number of intervals
     #! format: off
     if !isodd(N)  # Standard Simpson's composite 1/3 rule
@@ -112,7 +112,9 @@ function simpson_weights_uniform!(weights::AbstractVector, x::AbstractVector)
     return weights
 end
 
-function simpson_weights_nonuniform!(weights::AbstractVector, x::AbstractVector)
+function integration_weights_nonuniform!(
+    weights::AbstractVector, x::AbstractVector, ::Simpson
+)
     N = length(weights) - 1  # Number of intervals
     fill!(weights, 0)
 

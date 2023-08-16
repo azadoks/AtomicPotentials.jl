@@ -1,10 +1,6 @@
 module AtomicPotentials
 
-using Adapt
-using BSplineKit
 using LinearAlgebra
-using OffsetArrays
-using OrderedCollections
 using Polynomials
 using PrecompileTools
 using Printf
@@ -15,6 +11,9 @@ import Bessels: gamma
 import SpecialFunctions: erf
 
 ## Submodules
+# Classification of radial meshes
+export MeshClassification
+include("MeshClassification/MeshClassification.jl")
 # Numerical integration / quadrature
 export NumericalQuadrature
 include("NumericalQuadrature/NumericalQuadrature.jl")
@@ -22,103 +21,63 @@ include("NumericalQuadrature/NumericalQuadrature.jl")
 export Interpolation
 include("Interpolation/Interpolation.jl")
 
+## Common functions
 # Fast spherical Bessel functions of the first kind
 include("fast_sphericalbesselj.jl")
+export fast_sphericalbesselj
+# Radial Fourier transform
+include("radial_fourier_transform.jl")
+export rft
+export irft
 
-## Flag structs, abstract types, fundamental functions
-# Evaluation space flags
+## Generic atomic quantities
+# Evaluation space singletons
 export EvaluationSpace
 export RealSpace
 export FourierSpace
-# Analyticity flags
+# Analyticity singletons
 export Analyticity
 export Analytical
 export Numerical
-# Abstract type and important associated functions
-export AbstractAtomicQuantity
-include("atomic_quantity.jl")
+# Abstract type and interface
+export AbstractQuantity
+export angular_momentum
+export radial_grid
+export radial_function
+export n_x_factors
+export evaluate
+# TODO: maybe these two should be provided by Interpolation?
+export interpolate
+export resample
+# Numerical atomic quantity
+export NumericalQuantity
+# Analytical atomic quantities
+export HghProjector
+export HydrogenicProjector
+include("quantity.jl")
 
 ## Local potentials
+# Abstract type and interface
 export AbstractLocalPotential
-export LocalPotential
+export ionic_charge
+export energy_correction
+# Concrete types
+export NumericalLocalPotential
 export HghLocalPotential
 export CoulombLocalPotential
 export GaussianLocalPotential
 export CohenBergstresserLocalPotential
-export energy_correction
+# Local potential correction
+export AbstractLocalPotentialCorrection
+export CoulombLocalPotentialCorrection
+export CoulombErfLocalPotentialCorrection
 include("local_potential.jl")
 
-## Projectors and projector-like quantitities
-export AbstractProjector
-# Kleinman-Bylander projectors
-export AbstractKleinmanBylanderProjector
-export KleinmanBylanderProjector
-export HghKleinmanBylanderProjector
-# Atomic state / pseudo-orbital / pseudo-wavefunction
-export AbstractStateProjector
-export StateProjector
-export HydrogenicProjector
-include("projector.jl")
-
-## Augmentation functions
-export AugmentationFunction
-include("augmentation.jl")
-
-## Non-local potentials
-export NonlocalPotential
-include("nonlocal_potential.jl")
-
-## Charge densities
-export AbstractChargeDensity
-export ChargeDensity
-export GaussianChargeDensity
-include("charge_density.jl")
-
-## Atomic potential -- collection of atomic quantities
+## Container types
+export Augmentation
+export NonLocalPotential
 export AtomicPotential
-export charge_ionic
-export charge_nuclear
-export n_elec_valence
-export n_elec_core
-export count_n_proj_radial
-export count_n_proj
-export lmax
-export angular_momenta
-include("atomic_potential.jl")
+include("container.jl")
+
 include("pseudopotentialio.jl")
-
-## Hankel transforms
-export ht  # Hankel transform
-export iht  # Inverse Hankel transform
-include("hankel_transform.jl")
-
-## Interpolation
-export interpolate_onto
-include("interpolate_onto.jl")
-
-## Truncation
-export truncate
-include("truncate.jl")
-
-## Optimized type-stable routines for numerical types generated via metaprogramming
-include("opt.jl")
-
-@setup_workload begin
-    psp_files = []
-    for psp_file_tuple in [
-        ("pd_nc_sr_pbe_standard_0.4.1_psp8", "B.psp8"),
-        ("pd_nc_sr_pbe_standard_0.4.1_upf", "B.upf"),
-        ("hgh_lda_hgh", "si-q4.hgh"),
-    ]
-        push!(psp_files, PseudoPotentialIO.load_psp_file(psp_file_tuple...))
-    end
-    @compile_workload begin
-        for psp_file in psp_files
-            pot = AtomicPotential(psp_file)
-            pot_q = ht(pot, range(0.0, 10.0, 11))
-            pot_r = iht(pot_q, range(0.0, 6.0, 11))
-        end
-    end
 end
-
-end # module AtomicPotentials

@@ -24,6 +24,7 @@ function fast_sphericalbesselj(l::Integer)::Function
     l == 4 && return fast_sphericalbesselj4
     l == 5 && return fast_sphericalbesselj5
     return error("$(l) not supported")
+    # TODO: I guess this is commented out for type stab.?
     # return x -> sphericalbesselj(l, x)
 end
 
