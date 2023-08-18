@@ -4,23 +4,6 @@
 rft(::Nothing, args...; kwargs...) = nothing
 irft(::Nothing, args...; kwargs...) = nothing
 
-# dispatches for vectors of quantities (e.g. orbitals, projectors)
-# function rft(
-#     quantities::AbstractVector{<:Union{Nothing,AbstractQuantity{RealSpace}}},
-#     q::AbstractVector,;
-#     kwargs...,
-# )
-#     return map(quantity -> rft(quantity, q; kwargs...), quantities)
-# end
-
-# function irft(
-#     quantities::AbstractVector{<:Union{Nothing,AbstractQuantity{RealSpace}}},
-#     r::AbstractVector;
-#     kwargs...,
-# )
-#     return map(quantity -> irft(quantity, r; kwargs...), quantities)
-# end
-
 @doc raw"""
 Ultrasoft augmentation contribution to the charge density.
 """
@@ -69,6 +52,16 @@ function NonLocalPotential(
     projectors::VP, coupling, augmentation=nothing
 ) where {S<:EvaluationSpace,TP<:AbstractQuantity{S},VP<:AbstractVector{TP}}
     return NonLocalPotential(projectors, coupling, augmentation)
+end
+
+n_projector_radials(quantity::NonLocalPotential) = length(quantity.projectors)
+
+function n_projector_angulars(quantity::NonLocalPotential)
+    return sum(projector -> 2 * angular_momentum(projector) + 1, quantity.projectors)
+end
+
+function maximum_angular_momentum(quantity::NonLocalPotential)
+    return maximum(angular_momentum, quantity.projectors)
 end
 
 function rft(non_local::NonLocalPotential{RealSpace}, q::AbstractVector; kwargs...)
@@ -120,6 +113,25 @@ function AtomicPotential(
         ionic_charge_density,
         orbitals,
     )
+end
+
+function energy_correction(potential::AtomicPotential{RealSpace}; kwargs...)
+    return energy_correction(potential.local_potential; kwargs...)
+end
+
+function n_projector_radials(potential::AtomicPotential)
+    vnl = potential.non_local_potential
+    return isnothing(vnl) ? 0 : n_projector_radials(vnl)
+end
+
+function n_projector_angulars(potential::AtomicPotential)
+    vnl = potential.non_local_potential
+    return isnothing(vnl) ? 0 : n_projector_angulars(vnl)
+end
+
+function maximum_angular_momentum(potential::AtomicPotential)
+    vnl = potential.non_local_potential
+    return isnothing(vnl) ? 0 : maximum_angular_momentum(vnl)
 end
 
 function rft(potential::AtomicPotential{RealSpace}, q::AbstractVector; kwargs...)
