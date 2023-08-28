@@ -45,8 +45,8 @@ struct Uniform{T<:Real} <: Mesh{T}
 end
 
 function Uniform(x::AbstractVector{T}) where {T<:Real}
-    dx = sum(diff(x)) / (length(x) - 1)
-    x₀ = first(x)
+    dx = x[2] - x[1]
+    x₀ = x[1]
     return Uniform{T}(dx, x₀)
 end
 
@@ -99,9 +99,8 @@ struct ShiftedLog{T<:Real} <: Mesh{T}
 end
 
 function ShiftedLog(x::AbstractVector{T}) where {T<:Real}
-    x₂, x₃ = x[(begin + 1):(begin + 2)]
-    xc = x₂^2 / (x₃ - 2x₂)
-    dln = log((x₂ + xc) / xc)
+    dln = -x[2]^2 / (2x[2] - x[3])
+    xc = log(x[3] / x[2] - 1)
     return ShiftedLog{T}(xc, dln)
 end
 

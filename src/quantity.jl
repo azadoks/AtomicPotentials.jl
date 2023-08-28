@@ -1,5 +1,5 @@
 import .NumericalQuadrature: QuadratureMethod, Simpson, integration_weights
-import .Interpolation: InterpolationMethod, Linear
+import .Interpolation: InterpolationMethod, Spline, interpolate
 
 @doc raw"""
 Abstract evaluation space.
@@ -31,18 +31,25 @@ struct Numerical <: Analyticity end
 Abstract atomic potential quantity.
 """
 abstract type AbstractQuantity{S<:EvaluationSpace,A<:Analyticity} end
+
+Base.broadcastable(qty::AbstractQuantity) = Ref(qty)
+Base.isempty(qty::AbstractQuantity) = false
+
 @doc raw"""
 Return the angular momentum of an atomic potential quantity.
 """
 angular_momentum(quantity::AbstractQuantity)::Int = quantity.l
+
 @doc raw"""
 Return the radial grid of a numerical atomic potential quantity.
 """
 radial_grid(quantity::AbstractQuantity{<:EvaluationSpace,Numerical}) = quantity.x
+
 @doc raw"""
 Return the radial function of a numerical atomic potential quantity.
 """
 radial_function(quantity::AbstractQuantity{<:EvaluationSpace,Numerical}) = quantity.f
+
 @doc raw"""
 Return the number of times the radial grid is pre-multiplied into the radial function
 of an atomic potential quantity.
@@ -50,17 +57,25 @@ of an atomic potential quantity.
 n_x_factors(quantity::AbstractQuantity{<:EvaluationSpace,Numerical})::Int =
     quantity.n_x_factors
 n_x_factors(quantity::AbstractQuantity{<:EvaluationSpace,Analytical})::Int = 0
+
 @doc raw"""
 Construct an interpolation of the radial function of an atomic potential quantity.
 """
-function interpolate(
+function Interpolation.interpolate(
     quantity::AbstractQuantity{<:EvaluationSpace,Numerical},
-    interpolation_method::InterpolationMethod=LinearInterpolation(),
+    interpolation_method::InterpolationMethod=Spline(4),
     args...;
     kwargs...,
 )
-    return interpolation_method(radial_grid(quantity), radial_function(quantity))
+    return interpolate(
+        radial_grid(quantity),
+        radial_function(quantity),
+        interpolation_method,
+        args...;
+        kwargs...,
+    )
 end
+
 @doc raw"""
 Return a callable which evaluates the radial function of an atomic potential quantity.
 """
@@ -74,12 +89,13 @@ function evaluate(
 )
     return quantity
 end
+
 @doc raw"""
 Resample a numeric atomic potential quantity onto a uniform radial grid with spacing
 at most dx.
 """
 function resample(
-    dx::Real, quantity::AbstractQuantity{<:EvaluationSpace,Numerical}; kwargs...
+    quantity::AbstractQuantity{<:EvaluationSpace,Numerical}, dxp::Real; kwargs...
 )
     x = radial_grid(q)
     x_min, x_max = extrema(x)
@@ -87,6 +103,21 @@ function resample(
     xp = range(x_min, x_max, n_xp)
     return resample(quantity, xp; kwargs...)
 end
+
+function resample(
+    quantity::AbstractQuantity{<:EvaluationSpace,Numerical}, n_xp::Integer; kwargs...
+)
+    x = radial_grid(q)
+    x_min, x_max = extrema(x)
+    xp = range(x_min, x_max, n_xp)
+    return resample(quantity, xp; kwargs...)
+end
+
+## Symmetric array support
+
+LinearAlgebra.symmetric_type(::Type{T}) where {T<:AbstractQuantity} = T
+LinearAlgebra.symmetric(quantity::AbstractQuantity, ::Symbol) = quantity
+LinearAlgebra.transpose(quantity::AbstractQuantity) = quantity
 
 @doc raw"""
 Numerical, i.e. non-analytically-evaluatable, atomic quantity.
@@ -104,23 +135,47 @@ struct NumericalQuantity{S<:EvaluationSpace,Numerical,T<:Real,V<:AbstractVector{
     "Number of times the radial grid is pre-multiplied into the radial function."
     n_x_factors::Int
 end
+
 function NumericalQuantity{S}(
     x::V, f::V, l::Integer, n_x_factors::Integer=0
 ) where {S<:EvaluationSpace,T<:Real,V<:AbstractVector{T}}
     return NumericalQuantity{S,Numerical,T,V}(x, f, l, n_x_factors)
 end
 
+function Base.zero(::Type{<:NumericalQuantity{S,A,T,V}}) where {S,A,T,V}
+    return NumericalQuantity{S,A,T,V}(V(), V(), -1, 0)
+end
+
+function Base.iszero(quantity::NumericalQuantity)
+    return isempty(quantity.x) || isempty(quantity.f) || quantity.l == -1
+end
+
+function Base.show(io::IO, quantity::NumericalQuantity{RealSpace,Numerical,T}) where {T}
+    return print(io, "f{$(T)}[$(length(quantity.x)),l=$(quantity.l)](r)")
+end
+
+function Base.show(io::IO, quantity::NumericalQuantity{FourierSpace,Numerical,T}) where {T}
+    return print(io, "F{$(T)}[$(length(quantity.x)),l=$(quantity.l)](q)")
+end
+
+function Base.convert(::Type{T}, x::NumericalQuantity{S}) where {T<:Real,S<:EvaluationSpace}
+    return NumericalQuantity{S}(convert.(T, x.x), convert.(T, x.f), x.l, x.n_x_factors)
+end
+
+function Adapt.adapt_structure(to, x::NumericalQuantity{S}) where {S<:EvaluationSpace}
+    return NumericalQuantity{S}(adapt(to, x.x), adapt(to, x.f), x.l, x.n_x_factors)
+end
+
 @doc raw"""
 Re-sample a numerical atomic quantity's radial function on a new set of radial points
 `xp` by interpolating using `interpolation_method`.
 
-See also: [`InterpolationMethod`](@ref), [`LinearInterpolation`](@ref),
-[`CubicSplineInterpolation`](@ref)
+See also: [`InterpolationMethod`](@ref), [`Linear`](@ref), [`Spline`](@ref),
 """
 function resample(
     quantity::NumericalQuantity{S,Numerical,T,V},
     xp::VXP;
-    interpolation_method::InterpolationMethod=LinearInterpolation(),
+    interpolation_method::InterpolationMethod=Spline(4),
 ) where {S,T,V,TXP<:Real,VXP<:AbstractVector{TXP}}
     itp = interpolate(quantity, interpolation_method)
     fp = map(xp) do xpi
@@ -135,6 +190,7 @@ function rft(
     quantity::NumericalQuantity{RealSpace}, q::V; kwargs...
 ) where {V<:AbstractVector}
     T = eltype(q)
+    iszero(quantity) && return zero(NumericalQuantity{FourierSpace,Numerical,T,V})
     F::V = rft(
         q,
         radial_grid(quantity),
@@ -152,6 +208,7 @@ function irft(
     quantity::NumericalQuantity{FourierSpace}, r::V; kwargs...
 ) where {V<:AbstractVector}
     T = eltype(r)
+    iszero(quantity) && return zero(NumericalQuantity{RealSpace,Numerical,T,V})
     f::V = irft(
         r,
         radial_grid(quantity),
@@ -196,6 +253,10 @@ struct HghProjector{S<:EvaluationSpace,Analytical,T<:Real} <: AbstractQuantity{S
 end
 function HghProjector{S}(rₚ::T, n, l) where {S<:EvaluationSpace,T}
     return HghProjector{S,Analytical,T}(rₚ, n, l)
+end
+
+function Base.convert(::Type{T}, x::HghProjector{S}) where {T<:Real,S<:EvaluationSpace}
+    return HghProjector{S}(convert.(T, x.rₚ), x.n, x.l)
 end
 
 @doc raw"""
@@ -282,6 +343,24 @@ struct HydrogenicProjector{
     end
 end
 
+function Base.convert(::Type{T}, x::HydrogenicProjector{RealSpace}) where {T<:Real}
+    return HydrogenicProjector{RealSpace}(convert.(T, x.x), x.l, x.n, convert(T, x.α))
+end
+
+function Base.convert(::Type{T}, x::HydrogenicProjector{FourierSpace}) where {T<:Real}
+    return HydrogenicProjector{FourierSpace}(
+        convert.(T, x.x), convert.(T, x.f), x.l, x.n, convert(T, x.α)
+    )
+end
+
+function Adapt.adapt_structure(to, x::HydrogenicProjector{RealSpace})
+    return HydrogenicProjector{RealSpace}(adapt(to, x.x), x.l, x.n, x.α)
+end
+
+function Adapt.adapt_structure(to, x::HydrogenicProjector{FourierSpace})
+    return HydrogenicProjector{FourierSpace}(adapt(to, x.x), adapt(to, x.f), x.l, x.n, x.α)
+end
+
 # TODO: cite the source of the expressions!
 @doc raw"""
 Evaluate a hydrogenic orbital in real space analytically.
@@ -361,7 +440,7 @@ end
 function resample(
     quantity::HydrogenicProjector{FourierSpace,Numerical,T,V},
     xp::VXP;
-    interpolation_method::InterpolationMethod=LinearInterpolation(),
+    interpolation_method::InterpolationMethod=Spline(4),
 ) where {T,V,VXP<:AbstractVector}
     TXP = eltype(VXP)
     fp = similar(xp)
@@ -391,4 +470,74 @@ function irft(quantity::HydrogenicProjector{FourierSpace}, r::V; kwargs...) wher
     return HydrogenicProjector{RealSpace,Analytical,T,V}(
         r, angular_momentum(quantity), quantity.n, quantity.α
     )
+end
+
+struct GaussianChargeDensity{S<:EvaluationSpace,Analytical,T<:Real} <:
+       AbstractQuantity{S,Analytical}
+    Z::T
+    L::T
+end
+function GaussianChargeDensity{S}(Z::Real, L::T) where {S<:EvaluationSpace,T<:Real}
+    return GaussianChargeDensity{S,Analytical,T}(Z, L)
+end
+function GaussianChargeDensity{S}(
+    n_elec_core::Integer, n_elec_valence::Integer
+) where {S<:EvaluationSpace}
+    L = gaussian_density_decay_length(n_elec_core, n_elec_valence)
+    return GaussianChargeDensity{S}(n_elec_valence, L)
+end
+
+function (qty::GaussianChargeDensity{RealSpace})(r::T)::T where {T<:Real}
+    return T(qty.Z) * exp(-(r / (T(2) * T(qty.L)))^2) / (sqrt(T(2)) * T(qty.L))
+end
+
+function (qty::GaussianChargeDensity{FourierSpace})(q::T)::T where {T<:Real}
+    return T(qty.Z) * exp(-(q * T(qty.L))^2)
+end
+
+function rft(qty::GaussianChargeDensity{RealSpace}, args...; kwargs...)
+    return GaussianChargeDensity{FourierSpace}(qty.Z, qty.L)
+end
+
+function irft(qty::GaussianChargeDensity{FourierSpace}, args...; kwargs...)
+    return GaussianChargeDensity{RealSpace}(qty.Z, qty.L)
+end
+
+# Get the lengthscale of the valence density for an atom with `n_elec_core` core
+# and `n_elec_valence` valence electrons.
+function gaussian_density_decay_length(n_elec_core, n_elec_valence)
+    # Adapted from ABINIT/src/32_util/m_atomdata.F90,
+    # from which also the data has been taken.
+
+    n_elec_valence = round(Int, n_elec_valence)
+    if n_elec_valence == 0
+        return 0.0
+    end
+
+    data = if n_elec_core < 0.5
+        # Bare ions: Adjusted on 1H and 2He only
+        [0.6, 0.4, 0.3, 0.25, 0.2]
+    elseif n_elec_core < 2.5
+        # 1s2 core: Adjusted on 3Li, 6C, 7N, and 8O
+        [1.8, 1.4, 1.0, 0.7, 0.6, 0.5, 0.4, 0.35, 0.3]
+    elseif n_elec_core < 10.5
+        # Ne core (1s2 2s2 2p6): Adjusted on 11na, 13al, 14si and 17cl
+        [2.0, 1.6, 1.25, 1.1, 1.0, 0.9, 0.8, 0.7, 0.7, 0.7, 0.6]
+    elseif n_elec_core < 12.5
+        # Mg core (1s2 2s2 2p6 3s2): Adjusted on 19k, and on n_elec_core==10
+        [1.9, 1.5, 1.15, 1.0, 0.9, 0.8, 0.7, 0.6, 0.6, 0.6, 0.5]
+    elseif n_elec_core < 18.5
+        # Ar core (Ne + 3s2 3p6): Adjusted on 20ca, 25mn and 30zn
+        [2.0, 1.8, 1.5, 1.2, 1.0, 0.9, 0.85, 0.8, 0.75, 0.7, 0.65, 0.65, 0.6]
+    elseif n_elec_core < 28.5
+        # Full 3rd shell core (Ar + 3d10): Adjusted on 31ga, 34se and 38sr
+        [1.5, 1.25, 1.15, 1.05, 1.00, 0.95, 0.95, 0.9, 0.9, 0.85, 0.85, 0.80, 0.8, 0.75, 0.7]
+    elseif n_elec_core < 36.5
+        # Krypton core (Ar + 3d10 4s2 4p6): Adjusted on 39y, 42mo and 48cd
+        [2.0, 2.00, 1.60, 1.40, 1.25, 1.10, 1.00, 0.95, 0.90, 0.85, 0.80, 0.75, 0.7]
+    else
+        # For the remaining elements, consider a function of n_elec_valence only
+        [2.0, 2.00, 1.55, 1.25, 1.15, 1.10, 1.05, 1.0, 0.95, 0.9, 0.85, 0.85, 0.8]
+    end
+    return data[min(n_elec_valence, length(data))]
 end

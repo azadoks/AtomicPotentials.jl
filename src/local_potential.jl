@@ -160,6 +160,16 @@ function NumericalLocalPotential{S}(
     return NumericalLocalPotential{S,Numerical,T,V}(x, f, Z)
 end
 
+function Base.convert(
+    ::Type{T}, x::NumericalLocalPotential{S}
+) where {T<:Real,S<:EvaluationSpace}
+    return NumericalLocalPotential{S}(convert.(T, x.x), convert.(T, x.f), convert(T, x.Z))
+end
+
+function Adapt.adapt(to, x::NumericalLocalPotential{S}) where {S<:EvaluationSpace}
+    return NumericalLocalPotential{S}(adapt(to, x.x), adapt(to, x.f), x.Z)
+end
+
 function resample(
     quantity::NumericalLocalPotential{S,Numerical,T,V},
     xp::VXP;
@@ -194,7 +204,7 @@ function rft(
     F =
         rft(q, radial_grid(quantity), f, 0; n_x_factors=1, kwargs...) .+
         rft(correction_method).(q, T(ionic_charge(quantity)))
-    F[iszero.(q)] .= energy_correction(quantity; kwargs...)
+    F[iszero.(q)] .= zero(T)
     return NumericalLocalPotential{FourierSpace,Numerical,T,V}(
         q, F, T(ionic_charge(quantity))
     )
@@ -217,7 +227,6 @@ function irft(
             irft(r, radial_grid(quantity), F, 0; n_x_factors=1, kwargs...) .+
             ift(correction_method).(r, T(ionic_charge(quantity)))
         )
-    f[iszero.(r)] .= T(-Inf)
     return NumericalLocalPotential{RealSpace,Numerical,T,V}(r, f, T(ionic_charge(quantity)))
 end
 
@@ -269,6 +278,10 @@ function HghLocalPotential{S}(rₗ::T, cₗ, Z) where {S<:EvaluationSpace,T}
     return HghLocalPotential{S,Analytical,T}(rₗ, cₗ, Z)
 end
 
+function Base.convert(::Type{T}, x::HghLocalPotential{S}) where {T<:Real,S<:EvaluationSpace}
+    return HghLocalPotential{S}(convert(T, x.rₗ), convert.(T, x.cₗ), convert(T, x.Z))
+end
+
 @doc raw"""
 Evaluate the HGH local potential in the space defined by its type parameters.
 """
@@ -291,7 +304,7 @@ function (quantity::HghLocalPotential{RealSpace})(r::T)::T where {T<:Real}
 end
 
 function (quantity::HghLocalPotential{FourierSpace})(q::T)::T where {T<:Real}
-    iszero(q) && return energy_correction(quantity)
+    iszero(q) && return zero(T)
     x = q * T(quantity.rₗ)
     # The polynomial prefactor P(t) (as used inside the { ... } brackets of equation
     # (5) of the HGH98 paper)
@@ -345,6 +358,12 @@ struct CoulombLocalPotential{S,Analytical,T} <: AbstractLocalPotential{S,Analyti
     Z::T
 end
 
+function Base.convert(
+    ::Type{T}, x::CoulombLocalPotential{S}
+) where {T<:Real,S<:EvaluationSpace}
+    return CoulombLocalPotential{S}(convert(T, x.Z))
+end
+
 @doc raw"""
 Evaluate the Coulomb local potential in the space defined by its type parameters.
 """
@@ -383,6 +402,12 @@ V_\mathrm{local}(q) =
 struct CoulombErfLocalPotential{S,Analytical,T} <: AbstractLocalPotential{S,Analytical,T}
     "Ionic charge."
     Z::T
+end
+
+function Base.convert(
+    ::Type{T}, x::CoulombErfLocalPotential{S}
+) where {T<:Real,S<:EvaluationSpace}
+    return CoulombErfLocalPotential{S}(convert(T, x.Z))
 end
 
 @doc raw"""
@@ -428,6 +453,12 @@ struct GaussianLocalPotential{S,Analytical,T<:Real} <:
     L::T
 end
 
+function Base.convert(
+    ::Type{T}, x::GaussianLocalPotential{S}
+) where {T<:Real,S<:EvaluationSpace}
+    return GaussianLocalPotential{S}(convert(T, x.α), convert(T, x.L))
+end
+
 ionic_charge(quantity::GaussianLocalPotential) = 0
 
 @doc raw"""
@@ -455,18 +486,18 @@ function irft(
     return GaussianLocalPotential{RealSpace,A,T}(quantity.α, quantity.L)
 end
 
-# TODO: document
-struct CohenBergstresserLocalPotential{FourierSpace,Analytical,T<:Real} <:
-       AbstractLocalPotential{FourierSpace,Analytical,T}
-    V_sym::Dict{Int,T}  # Map |G|^2 (in units of (2π / lattice_constant)^2) to form factors
-    a::T  # Lattice constant (in Bohr) which is assumed
-end
+# # TODO: document
+# struct CohenBergstresserLocalPotential{FourierSpace,Analytical,T<:Real} <:
+#        AbstractLocalPotential{FourierSpace,Analytical,T}
+#     V_sym::Dict{Int,T}  # Map |G|^2 (in units of (2π / lattice_constant)^2) to form factors
+#     a::T  # Lattice constant (in Bohr) which is assumed
+# end
 
-ionic_charge(quantity::CohenBergstresserLocalPotential) = 4
+# ionic_charge(quantity::CohenBergstresserLocalPotential) = 4
 
-function (quantity::CohenBergstresserLocalPotential{FourierSpace})(q::T)::T where {T}
-    iszero(q) && return zero(T)  # Compensating charge background
-    # Get |q|^2 in units of (2π / lattice_constant)^2
-    qsq_pi = Int(round(q^2 / (2T(π) / quantity.a)^2; digits=2))
-    return T(get(el.V_sym, qsq_pi, 0.0))
-end
+# function (quantity::CohenBergstresserLocalPotential{FourierSpace})(q::T)::T where {T}
+#     iszero(q) && return zero(T)  # Compensating charge background
+#     # Get |q|^2 in units of (2π / lattice_constant)^2
+#     qsq_pi = Int(round(q^2 / (2T(π) / quantity.a)^2; digits=2))
+#     return T(get(el.V_sym, qsq_pi, 0.0))
+# end

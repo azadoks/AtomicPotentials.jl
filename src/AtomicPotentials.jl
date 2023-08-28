@@ -4,6 +4,8 @@ using LinearAlgebra
 using Polynomials
 using PrecompileTools
 using Printf
+using SparseArrays
+using Adapt
 
 using PeriodicTable: PeriodicTable
 import PseudoPotentialIOExperimental as PseudoPotentialIO
@@ -30,6 +32,10 @@ include("radial_fourier_transform.jl")
 export rft
 export irft
 
+_convert_optional(::Type{T}, x) where {T} = convert(T, x)
+_convert_optional(::Type{T}, x::AbstractVector) where {T} = map(Base.Fix1(convert, T), x)
+_convert_optional(::Type, x::Nothing) = nothing
+
 ## Generic atomic quantities
 # Evaluation space singletons
 export EvaluationSpace
@@ -54,6 +60,7 @@ export NumericalQuantity
 # Analytical atomic quantities
 export HghProjector
 export HydrogenicProjector
+export GaussianChargeDensity
 include("quantity.jl")
 
 ## Local potentials
@@ -75,9 +82,14 @@ include("local_potential.jl")
 
 ## Container types
 export Augmentation
+include("augmentation.jl")
 export NonLocalPotential
+include("non_local.jl")
 export AtomicPotential
-include("container.jl")
+export hasquantity
+export n_orbital_angulars
+export n_orbital_radials
+include("atomic.jl")
 
 include("pseudopotentialio.jl")
 end

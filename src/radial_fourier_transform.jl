@@ -50,3 +50,8 @@ function irft(
 ) where {TR<:Real,TX<:Real}
     return 1 / (2TR(π))^3 .* rft(r, x, F, l; kwargs...)
 end
+
+# (inverse) radial fourier transform fallbacks so that quantities / containers which are
+# optional don't require loads of conditional statements
+rft(::Nothing, args...; kwargs...) = nothing
+irft(::Nothing, args...; kwargs...) = nothing
