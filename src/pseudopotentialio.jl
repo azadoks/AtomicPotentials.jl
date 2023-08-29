@@ -146,6 +146,7 @@ function AtomicPotential(upf_file::PseudoPotentialIO.UpfFile)
                 return NumericalQuantity{RealSpace}(chi_r, chi_f, l, 1)
             end
         end
+        filter!(!isempty, χ)
     else
         χ = Nothing[]
     end

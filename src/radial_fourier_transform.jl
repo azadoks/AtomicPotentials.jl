@@ -14,7 +14,7 @@ integer.
 See also: [`irft`](@ref)
 """
 function rft(
-    q::AbstractVector{TQ},
+    q::AbstractArray{TQ},
     x::AbstractVector{TX},
     f::AbstractVector{TX},
     l::Int;
@@ -28,7 +28,7 @@ function rft(
     x²f = x .^ (2 - n_x_factors) .* f
     return map(q) do qᵢ
         integrand_ .= x²f .* jl.(qᵢ .* x)
-        return 4TQ(π) * dot(weights_, integrand_)
+        4TQ(π) * dot(weights_, integrand_)
     end
 end
 
@@ -46,7 +46,7 @@ integer.
 See also: [`rft`](@ref)
 """
 function irft(
-    r::AbstractVector{TR}, x::AbstractVector{TX}, F::AbstractVector{TX}, l::Int; kwargs...
+    r::AbstractArray{TR}, x::AbstractVector{TX}, F::AbstractVector{TX}, l::Int; kwargs...
 ) where {TR<:Real,TX<:Real}
     return 1 / (2TR(π))^3 .* rft(r, x, F, l; kwargs...)
 end

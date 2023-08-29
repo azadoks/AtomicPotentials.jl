@@ -1,5 +1,5 @@
 import .NumericalQuadrature: QuadratureMethod, Simpson, integration_weights
-import .Interpolation: InterpolationMethod, Spline, interpolate
+import .Interpolation: InterpolationMethod, InterpolationsLinear, interpolate
 
 @doc raw"""
 Abstract evaluation space.
@@ -63,7 +63,7 @@ Construct an interpolation of the radial function of an atomic potential quantit
 """
 function Interpolation.interpolate(
     quantity::AbstractQuantity{<:EvaluationSpace,Numerical},
-    interpolation_method::InterpolationMethod=Spline(4),
+    interpolation_method::InterpolationMethod=InterpolationsLinear(),
     args...;
     kwargs...,
 )
@@ -124,7 +124,7 @@ Numerical, i.e. non-analytically-evaluatable, atomic quantity.
 
 See also: [`AbstractQuantity`](@ref), [`AtomicLocalPotential`](@ref)
 """
-struct NumericalQuantity{S<:EvaluationSpace,Numerical,T<:Real,V<:AbstractVector{T}} <:
+struct NumericalQuantity{S<:EvaluationSpace,Numerical,T<:Real,V<:AbstractArray{T}} <:
        AbstractQuantity{S,Numerical}
     "Radial grid."
     x::V
@@ -173,22 +173,22 @@ Re-sample a numerical atomic quantity's radial function on a new set of radial p
 See also: [`InterpolationMethod`](@ref), [`Linear`](@ref), [`Spline`](@ref),
 """
 function resample(
-    quantity::NumericalQuantity{S,Numerical,T,V},
-    xp::VXP;
+    quantity::NumericalQuantity{S,Numerical,T,A},
+    xp::AXP;
     interpolation_method::InterpolationMethod=Spline(4),
-) where {S,T,V,TXP<:Real,VXP<:AbstractVector{TXP}}
+) where {S,T,A,TXP<:Real,AXP<:AbstractArray{TXP}}
     itp = interpolate(quantity, interpolation_method)
     fp = map(xp) do xpi
         itp(xpi)
     end
-    return NumericalQuantity{S,Numerical,TXP,VXP}(
+    return NumericalQuantity{S,Numerical,TXP,AXP}(
         xp, fp, angular_momentum(quantity), n_x_factors(quantity)
     )
 end
 
 function rft(
     quantity::NumericalQuantity{RealSpace}, q::V; kwargs...
-) where {V<:AbstractVector}
+) where {V<:AbstractArray}
     T = eltype(q)
     iszero(quantity) && return zero(NumericalQuantity{FourierSpace,Numerical,T,V})
     F::V = rft(
@@ -206,7 +206,7 @@ end
 
 function irft(
     quantity::NumericalQuantity{FourierSpace}, r::V; kwargs...
-) where {V<:AbstractVector}
+) where {V<:AbstractArray}
     T = eltype(r)
     iszero(quantity) && return zero(NumericalQuantity{RealSpace,Numerical,T,V})
     f::V = irft(

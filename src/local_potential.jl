@@ -144,7 +144,7 @@ end
 @doc raw"""
 Numerical, i.e. non-analytically-evaluatable, atomic local potential.
 """
-struct NumericalLocalPotential{S<:EvaluationSpace,Numerical,T<:Real,V<:AbstractVector{T}} <:
+struct NumericalLocalPotential{S<:EvaluationSpace,Numerical,T<:Real,V<:AbstractArray{T}} <:
        AbstractLocalPotential{S,Numerical,T}
     "Radial grid."
     x::V
@@ -196,7 +196,7 @@ function rft(
         RealSpace
     }(),
     kwargs...,
-) where {V<:AbstractVector}
+) where {V<:AbstractArray}
     T = eltype(q)
     f =
         radial_grid(quantity) .* radial_function(quantity) .-
@@ -217,7 +217,7 @@ function irft(
         FourierSpace
     }(),
     kwargs...,
-) where {V<:AbstractVector}
+) where {V<:AbstractArray}
     T = eltype(r)
     F =
         radial_grid(quantity) .* radial_function(quantity) .-
@@ -308,10 +308,18 @@ function (quantity::HghLocalPotential{FourierSpace})(q::T)::T where {T<:Real}
     x = q * T(quantity.rₗ)
     # The polynomial prefactor P(t) (as used inside the { ... } brackets of equation
     # (5) of the HGH98 paper)
-    poly_coeff = ((1,), (3, 0, -1), (15, 0, -10, 0, 1), (105, 0, -105, 0, 21, 0, -1))
-    P = sum(zip(quantity.cₗ, poly_coeff)) do (cₗ_i, c_i)
-        return T(cₗ_i) * evalpoly(x, c_i)
-    end
+    # TODO: this has terrible performance
+    # poly_coeff = ((1,), (3, 0, -1), (15, 0, -10, 0, 1), (105, 0, -105, 0, 21, 0, -1))
+    # P = sum(zip(quantity.cₗ, poly_coeff)) do (cₗ_i, c_i)
+    #     return T(cₗ_i) * evalpoly(x, c_i)
+    # end
+    # TODO: this is not GPU friendly
+    P = (
+        T(get(quantity.cₗ, 1, 0)) +
+        T(get(quantity.cₗ, 2, 0)) * (3 - x^2) +
+        T(get(quantity.cₗ, 3, 0)) * (15 - 10x^2 + x^4) +
+        T(get(quantity.cₗ, 4, 0)) * (105 - 105x^2 + 21x^4 - x^6)
+    )
     return 4T(π) *
            quantity.rₗ^2 *
            (-ionic_charge(quantity) + sqrt(T(π) / 2) * quantity.rₗ * x^2 * P) *
