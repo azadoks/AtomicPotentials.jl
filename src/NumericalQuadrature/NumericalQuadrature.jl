@@ -18,14 +18,16 @@ abstract type QuadratureMethod end
 
 Base.Broadcast.broadcastable(m::QuadratureMethod) = Ref(m)
 
-function integration_weights(x::AbstractVector, method::QuadratureMethod)
+function integration_weights(
+    x::V, method::QuadratureMethod
+) where {T<:Real,V<:AbstractVector{T}}
     # GPU is not supported for weight vector generation because scalar indexing is needed
     # We bring `x` to the CPU before generating the weights then put the weights on the
     # device after generation
-    x = adapt(Array, x)  # x -> CPU
-    weights = similar(x)
-    integration_weights!(weights, x, method)
-    return adapt(T, weights)  # weights -> GPU/CPU
+    x_CPU = adapt(Array, x)  # x -> CPU
+    weights_CPU = similar(x_CPU)
+    integration_weights!(weights_CPU, x_CPU, method)
+    return adapt(V, weights_CPU)  # weights -> GPU/CPU
 end
 
 function integrate!(

@@ -266,16 +266,22 @@ where $t = q r_\mathrm{local}$ and $P$ is a polynomial of at most degree 8.
 [Phys. Rev. B 54, 1703 (1996)](https://doi.org/10.1103/PhysRevB.54.1703)
 [Phys. Rev. B 58, 3651 (1998)](https://doi.org/10.1103/PhysRevB.58.3641)
 """
-struct HghLocalPotential{S,Analytical,T<:Real} <: AbstractLocalPotential{S,Analytical,T}
+struct HghLocalPotential{
+    S,Analytical,T<:Real,V<:AbstractVector{T}
+} <: AbstractLocalPotential{S,Analytical,T}
     "Range of the Gaussian ionic charge."
     rₗ::T
     raw"Polynomial coefficients defining $P(\frac{r}{r_{\mathrm{loc}})$."
-    cₗ::Union{NTuple{1,T},NTuple{2,T},NTuple{3,T},NTuple{4,T}}
+    cₗ::V
     "Ionic charge."
     Z::T
 end
-function HghLocalPotential{S}(rₗ::T, cₗ, Z) where {S<:EvaluationSpace,T}
-    return HghLocalPotential{S,Analytical,T}(rₗ, cₗ, Z)
+function HghLocalPotential{S}(rₗ::T, cₗ::V, Z) where {S<:EvaluationSpace,T,V}
+    return HghLocalPotential{S,Analytical,T,V}(rₗ, cₗ, Z)
+end
+
+function Adapt.adapt_structure(to, qty::HghLocalPotential{S}) where {S}
+    HghLocalPotential{S}(adapt(to, qty.rₗ), adapt(to, qty.cₗ), adapt(to, qty.Z))
 end
 
 function Base.convert(::Type{T}, x::HghLocalPotential{S}) where {T<:Real,S<:EvaluationSpace}
@@ -336,14 +342,16 @@ function energy_correction(
     )
 end
 
-function rft(quantity::HghLocalPotential{RealSpace,A,T}, args...; kwargs...) where {A,T}
-    return HghLocalPotential{FourierSpace,A,T}(
+function rft(quantity::HghLocalPotential{RealSpace,A,T,V}, args...; kwargs...) where {A,T,V}
+    return HghLocalPotential{FourierSpace,A,T,V}(
         quantity.rₗ, quantity.cₗ, ionic_charge(quantity)
     )
 end
 
-function irft(quantity::HghLocalPotential{FourierSpace,A,T}, args...; kwargs...) where {A,T}
-    return HghLocalPotential{RealSpace,A,T}(
+function irft(
+    quantity::HghLocalPotential{FourierSpace,A,T,V}, args...; kwargs...
+) where {A,T,V}
+    return HghLocalPotential{RealSpace,A,T,V}(
         quantity.rₗ, quantity.cₗ, ionic_charge(quantity)
     )
 end

@@ -161,7 +161,7 @@ function AtomicPotential(hgh_file::PseudoPotentialIO.HghFile)
     length(cloc) > 4 && error("length(cloc) > 4 not supported.")
     if length(cloc) < 4
         n_extra = 4 - length(cloc)
-        cloc = Tuple([cloc; zeros(Float64, n_extra)])
+        cloc = [cloc; zeros(Float64, n_extra)]
     end
     Vloc = HghLocalPotential{RealSpace}(hgh_file.rloc, cloc, Zval)
     ## Non-local potential
