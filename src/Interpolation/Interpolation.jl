@@ -28,7 +28,7 @@ end
 struct InterpolationsLinear <: InterpolationMethod end
 
 function interpolate(x::AbstractVector, y::AbstractVector, ::InterpolationsLinear)
-    if (x[2] - x[1]) ≈ (x[3] - x[2])
+    if std(diff(x)) ≈ 0
         return Interpolations.scale(
             Interpolations.interpolate(y, Interpolations.BSpline(Interpolations.Linear())),
             range(minimum(x), maximum(x), length(x)),
